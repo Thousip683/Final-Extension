@@ -232,6 +232,247 @@
   }
 
   /**
+   * Checks whether a form control has already been filled/selected by the user
+   */
+  function isElementFilled(el) {
+    if (!el) return false;
+    if (el.tagName === 'SELECT') {
+      if (el.selectedIndex < 0) return false;
+      const opt = el.options[el.selectedIndex];
+      if (!opt || opt.disabled) return false;
+      const val = (opt.value || '').trim().toLowerCase();
+      const txt = (opt.text || opt.textContent || '').trim().toLowerCase();
+      if (!val || val === '0' || val === '-1' || val === 'none' || val === 'select' || val === 'choose' || val === 'default' || val === '--select--') {
+        return false;
+      }
+      if (el.selectedIndex === 0 && (txt.includes('select') || txt.includes('choose') || txt.includes('--') || txt === '')) {
+        return false;
+      }
+      return true;
+    }
+    if (el.type === 'radio' || el.type === 'checkbox') {
+      return el.checked;
+    }
+    return typeof el.value === 'string' && el.value.trim().length > 0;
+  }
+
+  /**
+   * Intelligently selects the matching option in a <select> element,
+   * with special awareness for Gender options (Male/Female/Transgender, M/F, 1/2, Hindi/regional).
+   */
+  function fillSelect(selectEl, value, semanticType = null) {
+    if (!selectEl || !selectEl.options || selectEl.options.length === 0) return false;
+    const valStr = String(value == null ? '' : value).trim();
+    if (!valStr) return false;
+    const valLower = valStr.toLowerCase();
+    const isGender = semanticType === 'GENDER' ||
+      /gender|\bsex\b/i.test(selectEl.name || selectEl.id || '') ||
+      ['male', 'female', 'transgender', 'm', 'f'].includes(valLower);
+
+    let matchedOpt = null;
+
+    if (isGender) {
+      if (valLower === 'male' || valLower === 'm') {
+        for (const opt of selectEl.options) {
+          const oVal = (opt.value || '').trim().toLowerCase();
+          const oTxt = (opt.text || opt.textContent || '').trim().toLowerCase();
+          if (oVal === 'male' || oTxt === 'male') { matchedOpt = opt; break; }
+          if (/\bmale\b/i.test(oTxt) && !/female/i.test(oTxt)) { matchedOpt = opt; break; }
+          if (/\bmale\b/i.test(oVal) && !/female/i.test(oVal)) { matchedOpt = opt; break; }
+          if (oVal === 'm' || oTxt === 'm') { matchedOpt = opt; break; }
+          if (oVal === '1' && (oTxt.includes('male') || oTxt.includes('पुरुष') || !oTxt.includes('female'))) { matchedOpt = opt; break; }
+          if (oTxt.includes('पुरुष') || oVal.includes('पुरुष')) { matchedOpt = opt; break; }
+        }
+      } else if (valLower === 'female' || valLower === 'f') {
+        for (const opt of selectEl.options) {
+          const oVal = (opt.value || '').trim().toLowerCase();
+          const oTxt = (opt.text || opt.textContent || '').trim().toLowerCase();
+          if (oVal === 'female' || oTxt === 'female') { matchedOpt = opt; break; }
+          if (/female/i.test(oTxt) || /female/i.test(oVal)) { matchedOpt = opt; break; }
+          if (oVal === 'f' || oTxt === 'f') { matchedOpt = opt; break; }
+          if (oVal === '2' && (oTxt.includes('female') || oTxt.includes('महिला') || !oTxt.includes('male'))) { matchedOpt = opt; break; }
+          if (oTxt.includes('महिला') || oVal.includes('महिला')) { matchedOpt = opt; break; }
+        }
+      } else if (valLower.includes('trans')) {
+        for (const opt of selectEl.options) {
+          const oVal = (opt.value || '').trim().toLowerCase();
+          const oTxt = (opt.text || opt.textContent || '').trim().toLowerCase();
+          if (oVal.includes('trans') || oTxt.includes('trans') || oVal === '3') { matchedOpt = opt; break; }
+        }
+      }
+    }
+
+    // Generic fallback for any <select> if not matched by gender logic
+    if (!matchedOpt) {
+      for (const opt of selectEl.options) {
+        if ((opt.value || '').trim().toLowerCase() === valLower) { matchedOpt = opt; break; }
+      }
+    }
+    if (!matchedOpt) {
+      for (const opt of selectEl.options) {
+        if ((opt.text || opt.textContent || '').trim().toLowerCase() === valLower) { matchedOpt = opt; break; }
+      }
+    }
+    if (!matchedOpt) {
+      for (const opt of selectEl.options) {
+        const oVal = (opt.value || '').trim().toLowerCase();
+        const oTxt = (opt.text || opt.textContent || '').trim().toLowerCase();
+        if (oVal && valLower.includes(oVal) && oVal.length >= 2) { matchedOpt = opt; break; }
+        if (oTxt && (oTxt.includes(valLower) || valLower.includes(oTxt)) && oTxt.length >= 2) { matchedOpt = opt; break; }
+      }
+    }
+
+    if (!matchedOpt) return false;
+
+    matchedOpt.selected = true;
+    selectEl.selectedIndex = matchedOpt.index;
+
+    // React/Angular setter support
+    const prototype = Object.getPrototypeOf(selectEl);
+    const descriptor = Object.getOwnPropertyDescriptor(prototype, 'value');
+    if (descriptor && descriptor.set) {
+      descriptor.set.call(selectEl, matchedOpt.value);
+    } else {
+      selectEl.value = matchedOpt.value;
+    }
+
+    selectEl.dispatchEvent(new Event('input', { bubbles: true, cancelable: true }));
+    selectEl.dispatchEvent(new Event('change', { bubbles: true, cancelable: true }));
+    return true;
+  }
+
+  /**
+   * Sets the matching radio button in a radio group
+   */
+  function fillRadioGroup(radioElOrName, value) {
+    let radios = [];
+    if (typeof radioElOrName === 'string') {
+      try {
+        radios = Array.from(document.querySelectorAll(`input[type="radio"][name="${CSS.escape(radioElOrName)}"]`));
+      } catch (e) {
+        radios = Array.from(document.querySelectorAll(`input[type="radio"][name="${radioElOrName}"]`));
+      }
+    } else if (radioElOrName && radioElOrName.name) {
+      try {
+        radios = Array.from(document.querySelectorAll(`input[type="radio"][name="${CSS.escape(radioElOrName.name)}"]`));
+      } catch (e) {
+        radios = [radioElOrName];
+      }
+    } else if (radioElOrName) {
+      radios = [radioElOrName];
+    }
+    if (radios.length === 0) return false;
+
+    const valLower = String(value == null ? '' : value).trim().toLowerCase();
+
+    for (const r of radios) {
+      const rVal = (r.value || '').trim().toLowerCase();
+      let rLabel = '';
+      if (r.id) {
+        try {
+          const lbl = document.querySelector(`label[for="${CSS.escape(r.id)}"]`);
+          if (lbl) rLabel = lbl.textContent.trim().toLowerCase();
+        } catch (e) {}
+      }
+      if (!rLabel && r.parentElement) {
+        rLabel = r.parentElement.textContent.trim().toLowerCase();
+      }
+
+      let isMatch = false;
+      if (valLower === 'male' || valLower === 'm') {
+        isMatch = (rVal === 'male' || rVal === 'm' || rVal === '1' ||
+                   (/\bmale\b/i.test(rLabel) && !/female/i.test(rLabel)));
+      } else if (valLower === 'female' || valLower === 'f') {
+        isMatch = (rVal === 'female' || rVal === 'f' || rVal === '2' ||
+                   /female/i.test(rLabel));
+      } else if (valLower.includes('trans')) {
+        isMatch = rVal.includes('trans') || rLabel.includes('trans') || rVal === '3';
+      } else {
+        isMatch = (rVal === valLower || rLabel.includes(valLower));
+      }
+
+      if (isMatch) {
+        r.checked = true;
+        r.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+        r.dispatchEvent(new Event('input', { bubbles: true, cancelable: true }));
+        r.dispatchEvent(new Event('change', { bubbles: true, cancelable: true }));
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Sets value on an <input> or <textarea> with React/Angular/native setter support
+   */
+  function setInputValue(el, value) {
+    if (!el) return false;
+    const strVal = String(value == null ? '' : value);
+    const prototype = Object.getPrototypeOf(el);
+    const descriptor = Object.getOwnPropertyDescriptor(prototype, 'value');
+    if (descriptor && descriptor.set) {
+      descriptor.set.call(el, strVal);
+    } else {
+      el.value = strVal;
+    }
+    el.dispatchEvent(new Event('input', { bubbles: true, cancelable: true }));
+    el.dispatchEvent(new Event('change', { bubbles: true, cancelable: true }));
+    return true;
+  }
+
+  /**
+   * General element filler supporting text, select, radio, checkbox
+   */
+  function fillElement(el, value, semanticType = null) {
+    if (!el || value === null || value === undefined || value === '') return false;
+
+    if (el.tagName === 'SELECT') {
+      return fillSelect(el, value, semanticType);
+    }
+
+    if (el.type === 'radio') {
+      return fillRadioGroup(el, value);
+    }
+
+    if (el.type === 'checkbox') {
+      const shouldCheck = Boolean(value) && String(value).toLowerCase() !== 'false' && String(value) !== '0';
+      el.checked = shouldCheck;
+      el.dispatchEvent(new Event('change', { bubbles: true }));
+      return true;
+    }
+
+    return setInputValue(el, value);
+  }
+
+  /**
+   * Helper to find a form control associated with a given label string
+   */
+  function findFieldByLabel(labelText) {
+    if (!labelText || typeof document === 'undefined') return null;
+    const cleanLabel = String(labelText).replace(/[*:\s]+/g, ' ').trim().toLowerCase();
+    if (!cleanLabel) return null;
+
+    const allLabels = Array.from(document.querySelectorAll('label'));
+    for (const lbl of allLabels) {
+      const txt = lbl.innerText.replace(/[*:\s]+/g, ' ').trim().toLowerCase();
+      if (txt === cleanLabel || txt.includes(cleanLabel) || cleanLabel.includes(txt)) {
+        if (lbl.htmlFor) {
+          const target = document.getElementById(lbl.htmlFor);
+          if (target) return target;
+        }
+        const inside = lbl.querySelector('select, input, textarea');
+        if (inside) return inside;
+        const parent = lbl.closest('.form-group, .form-row, .field, div, tr, td');
+        if (parent) {
+          const inParent = parent.querySelector('select, input:not([type=hidden]), textarea');
+          if (inParent && inParent !== lbl) return inParent;
+        }
+      }
+    }
+    return null;
+  }
+
+  /**
    * Scrapes the form that contains the given file input element.
    * Falls back to the largest form on the page if no parent form is found.
    * Returns a JSON array of field descriptors for Gemini to map against.
@@ -262,16 +503,58 @@
     );
 
     const fields = [];
+    const seenRadioNames = new Set();
     let posIndex = 0;
 
     for (const el of inputs) {
       // Skip file inputs themselves (no text value to fill)
       if (el.type === 'file') continue;
-      // Skip checkboxes/radios for now (handled separately by existing validator)
-      if (el.type === 'checkbox' || el.type === 'radio') continue;
+      // Skip checkboxes for now (handled separately by existing validator)
+      if (el.type === 'checkbox') continue;
+
+      // Group and represent radio buttons
+      if (el.type === 'radio') {
+        const radioName = el.name;
+        if (!radioName || seenRadioNames.has(radioName)) continue;
+        seenRadioNames.add(radioName);
+
+        let groupLabel = '';
+        const fieldset = el.closest('fieldset');
+        if (fieldset) {
+          const legend = fieldset.querySelector('legend');
+          if (legend) groupLabel = legend.innerText.replace(/\*/g, '').trim();
+        }
+        if (!groupLabel) {
+          const group = el.closest('div, li, td, .form-group, .field, tr');
+          if (group) {
+            const lbl = group.querySelector('label, .label, .control-label, strong, b');
+            if (lbl) groupLabel = lbl.innerText.replace(/\*/g, '').trim();
+          }
+        }
+        let checkedRadio = null;
+        try {
+          checkedRadio = container.querySelector(`input[type="radio"][name="${CSS.escape(radioName)}"]:checked`);
+        } catch (e) {
+          checkedRadio = container.querySelector(`input[type="radio"][name="${radioName}"]:checked`);
+        }
+
+        fields.push({
+          fieldKey: radioName,
+          id: el.id || null,
+          name: radioName,
+          type: 'radio',
+          label: groupLabel || radioName,
+          placeholder: null,
+          currentValue: checkedRadio ? checkedRadio.value : ''
+        });
+        continue;
+      }
 
       // Derive a stable fieldKey: prefer id, then name, then positional fallback
       const fieldKey = el.id || el.name || `field_${posIndex++}`;
+      try {
+        el.setAttribute('data-eg-field-key', fieldKey);
+      } catch (e) {}
 
       // Find the associated label text
       let label = '';
@@ -293,6 +576,8 @@
         }
       }
 
+      const currentVal = isElementFilled(el) ? (el.value || '').trim() : '';
+
       fields.push({
         fieldKey,
         id: el.id || null,
@@ -300,7 +585,7 @@
         type: el.type || el.tagName.toLowerCase(),
         label: label || el.placeholder || fieldKey,
         placeholder: el.placeholder || null,
-        currentValue: el.value || null
+        currentValue: currentVal
       });
     }
 
@@ -417,6 +702,45 @@
     console.log('================== [ErrorGuard OCR] RAW TEXT END ====================');
     console.log('[ErrorGuard] Parsed Document Structure:', parsedData);
 
+    // Augment form mapping if document has a phone number
+    if (parsedData.phone) {
+      let targetKey = 'phone';
+      let targetLabel = 'Mobile Number';
+      if (Array.isArray(formSchema)) {
+        const phoneField = formSchema.find(f =>
+          f.type === 'tel' ||
+          /(phone|mobile|contact|telephone|cell|మొబైల్|ఫోన్)/i.test(`${f.fieldKey || ''} ${f.name || ''} ${f.id || ''} ${f.label || ''} ${f.placeholder || ''}`)
+        );
+        if (phoneField) {
+          targetKey = phoneField.fieldKey;
+          targetLabel = phoneField.label || 'Mobile Number';
+        }
+      }
+      if (!aiFieldMap) aiFieldMap = {};
+      aiFieldMap[targetKey] = parsedData.phone;
+      if (!ocrResult.match) ocrResult.match = { fillMap: {}, rows: [] };
+      if (!ocrResult.match.fillMap) ocrResult.match.fillMap = {};
+      ocrResult.match.fillMap[targetKey] = parsedData.phone;
+      if (!Array.isArray(ocrResult.match.rows)) ocrResult.match.rows = [];
+      const existingRow = ocrResult.match.rows.find(r => r.fieldKey === targetKey || r.semanticType === 'PHONE');
+      if (!existingRow) {
+        ocrResult.match.rows.push({
+          fieldKey: targetKey,
+          label: targetLabel,
+          value: parsedData.phone,
+          fillable: true,
+          needsReview: false,
+          conflict: false,
+          confidence: 0.95,
+          semanticType: 'PHONE'
+        });
+      } else if (!existingRow.value) {
+        existingRow.value = parsedData.phone;
+        existingRow.fillable = true;
+        existingRow.semanticType = 'PHONE';
+      }
+    }
+
     if (state.typeIssue?.severity === 'BLOCKING') {
       aiFieldMap = null;
     }
@@ -424,16 +748,18 @@
     // 6. Show Auto-Fill Banner
     if (aiFieldMap) {
       // Build a synthetic docData from the AI field map so the banner's
-      // guard check (docData.name / docData.dob / docData.certificateNo) passes.
+      // guard check (docData.name / docData.dob / docData.certificateNo / docData.gender / docData.phone) passes.
       // The banner needs at least one non-null value to render.
       const bannerDocData = {
         name: aiFieldMap.fullName || parsedData.name || null,
         dob: aiFieldMap.dob || parsedData.dob || null,
-        certificateNo: aiFieldMap.aadhaarNumber || aiFieldMap.panNumber || aiFieldMap.certificateNo || parsedData.certificateNo || null,
+        gender: aiFieldMap.gender || parsedData.gender || null,
+        phone: (aiFieldMap && (aiFieldMap.phone || aiFieldMap.mobile)) || parsedData.phone || null,
+        certificateNo: (aiFieldMap && (aiFieldMap.aadhaarNumber || aiFieldMap.panNumber || aiFieldMap.certificateNo)) || parsedData.certificateNo || null,
         docType: parsedData.docType || 'DOCUMENT'
       };
 
-      const hasAnyData = bannerDocData.name || bannerDocData.dob || bannerDocData.certificateNo;
+      const hasAnyData = bannerDocData.name || bannerDocData.dob || bannerDocData.certificateNo || bannerDocData.gender || bannerDocData.phone;
       if (hasAnyData) {
         // The preview is built from the very rows that will be written, so what the
         // banner promises and what auto-fill does can never disagree.
@@ -441,6 +767,7 @@
         const previewItems = rows
           .filter(row => row.fillable || row.conflict || row.value)
           .map(row => ({
+            fieldKey: row.fieldKey,
             label: row.label || row.fieldKey,
             value: row.value,
             needsReview: !!row.needsReview,
@@ -449,7 +776,7 @@
           }));
         Overlay.showAutoFillBanner(
           bannerDocData,
-          () => applyFieldMap(ocrResult.match || { fillMap: aiFieldMap }),
+          (excludedKeys) => applyFieldMap(ocrResult.match || { fillMap: aiFieldMap }, excludedKeys),
           null,
           previewItems
         );
@@ -459,12 +786,12 @@
       const currentScan = Detector.scan();
       const hasBlanks = currentScan.fields.some(f =>
         f.semantic &&
-        (f.semantic.type === 'FULL_NAME' || f.semantic.type === 'DOB' || f.semantic.type === 'CERTIFICATE_NUMBER') &&
-        !f.value
+        (f.semantic.type === 'FULL_NAME' || f.semantic.type === 'DOB' || f.semantic.type === 'CERTIFICATE_NUMBER' || f.semantic.type === 'GENDER' || f.semantic.type === 'PHONE') &&
+        !isElementFilled(f.field)
       );
       if (!state.typeIssue || state.typeIssue.severity !== 'BLOCKING') {
-        if (hasBlanks && (parsedData.name || parsedData.dob || parsedData.certificateNo)) {
-          Overlay.showAutoFillBanner(parsedData, () => applyAutoFill(parsedData));
+        if (hasBlanks && (parsedData.name || parsedData.dob || parsedData.certificateNo || parsedData.gender || parsedData.phone)) {
+          Overlay.showAutoFillBanner(parsedData, (excludedKeys) => applyAutoFill(parsedData, excludedKeys));
         }
       }
     }
@@ -488,12 +815,24 @@
   }
 
   /**
-   * NEW: Apply AI-generated field map directly by element id/name.
-   * Zero regex. Zero semantic guessing. Gemini told us exactly which field gets what.
-   * @param {Object} fieldMap - { fieldKey: value } from /api/map-form-fields
+   * Apply AI-generated field map directly by element id/name, data attribute, label, or semantic fallback.
+   * Uses robust fillElement with framework & case-insensitive select/radio support.
+   * @param {Object} match - match object with { fillMap, rows, reviewMap } or raw field map
    */
-  function applyFieldMap(match) {
+  function applyFieldMap(match, excludedKeys = null) {
     if (!match) return;
+    const excluded = excludedKeys instanceof Set ? excludedKeys : new Set(Array.isArray(excludedKeys) ? excludedKeys : []);
+    const isExcluded = (key, row) => {
+      if (!key) return false;
+      if (excluded.has(key) || excluded.has(key.toLowerCase())) return true;
+      if (row) {
+        if (row.fieldKey && (excluded.has(row.fieldKey) || excluded.has(row.fieldKey.toLowerCase()))) return true;
+        if (row.label && (excluded.has(row.label) || excluded.has(row.label.toLowerCase()))) return true;
+        if (row.semanticType && (excluded.has(row.semanticType) || excluded.has(row.semanticType.toLowerCase()))) return true;
+      }
+      return false;
+    };
+
     // Accept either the full match result or a plain { fieldKey: value } map.
     const isResult = typeof match === 'object' && (match.fillMap || match.rows);
     const fillMap = isResult ? (match.fillMap || match.fieldMap || {}) : match;
@@ -505,25 +844,107 @@
     let reviewCount = 0;
     reviewFillNotices = [];
 
-    for (const [fieldKey, value] of Object.entries(fillMap)) {
+    // Combine fillMap keys and any rows that have a value
+    const entriesToProcess = { ...fillMap };
+    for (const r of rows) {
+      if (r && r.fieldKey && r.value && entriesToProcess[r.fieldKey] === undefined) {
+        entriesToProcess[r.fieldKey] = r.value;
+      }
+    }
+
+    for (const [fieldKey, value] of Object.entries(entriesToProcess)) {
       if (value === null || value === undefined || value === '') continue;
 
-      // Try getElementById first (most reliable), then name
+      const row = rowFor(fieldKey);
+      if (isExcluded(fieldKey, row)) continue;
+
+      const isGender = (row && row.semanticType === 'GENDER') ||
+        /gender|\bsex\b/i.test(fieldKey) ||
+        (row && row.label && /gender|\bsex\b/i.test(row.label)) ||
+        ['MALE', 'FEMALE', 'TRANSGENDER'].includes(String(value).trim().toUpperCase());
+
+      if (isGender && (excluded.has('gender') || excluded.has('Gender') || excluded.has('GENDER') || excluded.has('sex') || excluded.has('Sex'))) {
+        continue;
+      }
+
+      const isPhone = (row && row.semanticType === 'PHONE') ||
+        /phone|mobile|contact|telephone|cell/i.test(fieldKey) ||
+        (row && row.label && /phone|mobile|contact|telephone|cell/i.test(row.label));
+
+      if (isPhone && (excluded.has('phone') || excluded.has('mobile') || excluded.has('Phone') || excluded.has('Mobile') || excluded.has('PHONE') || excluded.has('MOBILE'))) {
+        continue;
+      }
+
+      // 1. Try getElementById first (most reliable)
       let el = document.getElementById(fieldKey);
-      if (!el) el = document.querySelector(`[name="${fieldKey}"]`);
+
+      // 2. Try name attribute
+      if (!el) {
+        try {
+          el = document.querySelector(`[name="${CSS.escape(fieldKey)}"]`);
+        } catch (e) {
+          el = document.querySelector(`[name="${fieldKey}"]`);
+        }
+      }
+
+      // 3. Try data-eg-field-key set during scrapeTargetForm
+      if (!el) {
+        try {
+          el = document.querySelector(`[data-eg-field-key="${CSS.escape(fieldKey)}"]`);
+        } catch (e) {
+          el = document.querySelector(`[data-eg-field-key="${fieldKey}"]`);
+        }
+      }
+
+      // 4. Try finding by row label
+      if (!el && row && row.label) {
+        el = findFieldByLabel(row.label);
+      }
+
+      // 5. Gender-specific fallback search if not found
+      if (!el && isGender) {
+        el = document.querySelector('select[name*="gender" i], select[id*="gender" i], select[name*="sex" i], select[id*="sex" i]') ||
+             document.querySelector('input[name*="gender" i]:not([type=radio]), input[id*="gender" i]:not([type=radio])');
+        if (!el) {
+          const radio = document.querySelector('input[type="radio"][name*="gender" i], input[type="radio"][name*="sex" i]');
+          if (radio) {
+            if (fillRadioGroup(radio, value)) {
+              filledCount++;
+            }
+            continue;
+          }
+        }
+      }
+
+      // 5b. Phone-specific fallback search if not found
+      if (!el && isPhone) {
+        el = document.querySelector('input[type="tel"], input[name*="phone" i], input[name*="mobile" i], input[id*="phone" i], input[id*="mobile" i], input[name*="contact" i], input[id*="contact" i]');
+      }
+
+      // 6. Radio group by name fallback
+      if (!el) {
+        const radios = document.querySelectorAll(`input[type="radio"][name="${fieldKey}"]`);
+        if (radios.length > 0) {
+          if (fillRadioGroup(fieldKey, value)) {
+            filledCount++;
+          }
+          continue;
+        }
+      }
+
       if (!el) continue;
 
-      // Don't overwrite a field the user has already filled
-      if (el.value && el.value.trim() !== '') continue;
+      // Don't overwrite a field the user has genuinely already filled
+      if (isElementFilled(el)) continue;
 
-      el.value = String(value);
-      el.dispatchEvent(new Event('input', { bubbles: true }));
-      el.dispatchEvent(new Event('change', { bubbles: true }));
-      filledCount++;
+      const semanticType = row?.semanticType || (isGender ? 'GENDER' : (isPhone ? 'PHONE' : null));
+      const success = fillElement(el, value, semanticType);
+      if (success) {
+        filledCount++;
+      }
 
       // Less-certain readings are still filled (the user asked for it) but flagged.
-      if (Object.prototype.hasOwnProperty.call(reviewMap, fieldKey)) {
-        const row = rowFor(fieldKey);
+      if (Object.prototype.hasOwnProperty.call(reviewMap, fieldKey) || (row && row.needsReview)) {
         const pct = row && typeof row.confidence === 'number'
           ? `${Math.round(row.confidence * 100)}%` : 'low';
         reviewCount++;
@@ -542,55 +963,87 @@
     }
 
     Logger.info('ContentScript', `On-device field map applied: ${filledCount} filled, ${reviewCount} need review`);
-    runEvaluation({ showAlerts: reviewCount > 0 ? true : userHasCheckedErrors });
+    runEvaluation({ showAlerts: userHasCheckedErrors });
   }
 
-  function applyAutoFill(data) {
+  function applyAutoFill(data, excludedKeys = null) {
     if (!data) return;
+    const excluded = excludedKeys instanceof Set ? excludedKeys : new Set(Array.isArray(excludedKeys) ? excludedKeys : []);
+    const isExcluded = (keys) => keys.some(k => k && (excluded.has(k) || excluded.has(k.toLowerCase()) || excluded.has(k.toUpperCase())));
+
     const scanResult = Detector.scan();
+    let genderFilled = false;
+    let phoneFilled = false;
+
     for (const item of scanResult.fields) {
       if (!item.semantic) continue;
       const sType = item.semantic.type;
 
+      // Don't overwrite a field already filled
+      if (isElementFilled(item.field)) continue;
+
       // FULL_NAME: fill applicant name only — never touch FATHER_NAME fields
-      if (sType === 'FULL_NAME' && data.name) {
-        item.field.value = data.name;
-        item.field.dispatchEvent(new Event('input', { bubbles: true }));
-        item.field.dispatchEvent(new Event('change', { bubbles: true }));
+      if (sType === 'FULL_NAME' && data.name && !isExcluded(['name', 'fullName', 'FULL_NAME', 'Name', item.field.id, item.field.name])) {
+        fillElement(item.field, data.name, 'FULL_NAME');
       }
 
       // FATHER_NAME / MOTHER_NAME: skip auto-fill — Aadhaar/PAN does not
       // contain parent names in a reliably extractable structured form.
       if (sType === 'FATHER_NAME' || sType === 'MOTHER_NAME') continue;
 
-      if (sType === 'DOB' && data.dob) {
+      if (sType === 'DOB' && data.dob && !isExcluded(['dob', 'DOB', 'dateOfBirth', 'Date of Birth', item.field.id, item.field.name])) {
         const iso = Normalize.date(data.dob);
-        item.field.value = item.field.type === 'date' ? (iso || data.dob) : data.dob;
-        item.field.dispatchEvent(new Event('input', { bubbles: true }));
-        item.field.dispatchEvent(new Event('change', { bubbles: true }));
+        const dobVal = item.field.type === 'date' ? (iso || data.dob) : data.dob;
+        fillElement(item.field, dobVal, 'DOB');
+      }
+
+      if (sType === 'GENDER' && data.gender && !isExcluded(['gender', 'GENDER', 'Gender', 'sex', 'Sex', item.field.id, item.field.name])) {
+        fillElement(item.field, data.gender, 'GENDER');
+        genderFilled = true;
+      }
+
+      if (sType === 'PHONE' && data.phone && !isExcluded(['phone', 'mobile', 'PHONE', 'MOBILE', 'Phone', 'Mobile', item.field.id, item.field.name])) {
+        fillElement(item.field, data.phone, 'PHONE');
+        phoneFilled = true;
       }
 
       // CERTIFICATE_NUMBER: only fill when the document is genuinely a
       // certificate — never when it is an Aadhaar or PAN card.
       const isCertDoc = data.docType && !['AADHAAR', 'PAN'].includes(data.docType.toUpperCase());
-      if (sType === 'CERTIFICATE_NUMBER' && data.certificateNo && isCertDoc) {
-        item.field.value = data.certificateNo;
-        item.field.dispatchEvent(new Event('input', { bubbles: true }));
-        item.field.dispatchEvent(new Event('change', { bubbles: true }));
+      if (sType === 'CERTIFICATE_NUMBER' && data.certificateNo && isCertDoc && !isExcluded(['certificateNo', 'CERTIFICATE_NUMBER', 'Certificate No.', item.field.id, item.field.name])) {
+        fillElement(item.field, data.certificateNo, 'CERTIFICATE_NUMBER');
       }
 
-      if (sType === 'AADHAAR_NUMBER' && (data.aadhaarNo || (data.docType === 'AADHAAR' && data.certificateNo))) {
-        item.field.value = data.aadhaarNo || data.certificateNo;
-        item.field.dispatchEvent(new Event('input', { bubbles: true }));
-        item.field.dispatchEvent(new Event('change', { bubbles: true }));
+      if (sType === 'AADHAAR_NUMBER' && (data.aadhaarNo || (data.docType === 'AADHAAR' && data.certificateNo)) && !isExcluded(['aadhaarNo', 'aadhaarNumber', 'AADHAAR_NUMBER', 'Aadhaar No.', item.field.id, item.field.name])) {
+        fillElement(item.field, data.aadhaarNo || data.certificateNo, 'AADHAAR_NUMBER');
       }
 
-      if (sType === 'PAN_NUMBER' && (data.panNo || (data.docType === 'PAN' && data.certificateNo))) {
-        item.field.value = data.panNo || data.certificateNo;
-        item.field.dispatchEvent(new Event('input', { bubbles: true }));
-        item.field.dispatchEvent(new Event('change', { bubbles: true }));
+      if (sType === 'PAN_NUMBER' && (data.panNo || (data.docType === 'PAN' && data.certificateNo)) && !isExcluded(['panNo', 'panNumber', 'PAN_NUMBER', 'PAN', item.field.id, item.field.name])) {
+        fillElement(item.field, data.panNo || data.certificateNo, 'PAN_NUMBER');
       }
     }
+
+    // Gender fallback in case Detector didn't classify the field
+    if (data.gender && !genderFilled && !isExcluded(['gender', 'GENDER', 'Gender', 'sex', 'Sex'])) {
+      const genderEl = document.querySelector('select[name*="gender" i], select[id*="gender" i], select[name*="sex" i], select[id*="sex" i], input[name*="gender" i]:not([type=radio]), input[id*="gender" i]:not([type=radio])');
+      if (genderEl && !isElementFilled(genderEl)) {
+        fillElement(genderEl, data.gender, 'GENDER');
+      } else {
+        const radio = document.querySelector('input[type="radio"][name*="gender" i], input[type="radio"][name*="sex" i]');
+        if (radio) {
+          fillRadioGroup(radio, data.gender);
+        }
+      }
+    }
+
+    // Phone fallback in case Detector didn't classify the field
+    if (data.phone && !phoneFilled && !isExcluded(['phone', 'mobile', 'PHONE', 'MOBILE', 'Phone', 'Mobile'])) {
+      const phoneEl = document.querySelector('input[type="tel"], input[name*="phone" i], input[name*="mobile" i], input[id*="phone" i], input[id*="mobile" i], input[name*="contact" i], input[id*="contact" i]');
+      if (phoneEl && !isElementFilled(phoneEl)) {
+        fillElement(phoneEl, data.phone, 'PHONE');
+      }
+    }
+
     runEvaluation({ showAlerts: userHasCheckedErrors });
   }
 
@@ -862,13 +1315,6 @@
       extractedData: extractedDocData,
       formData
     });
-
-    // Concrete document-vs-form problems are always surfaced inline, even before the
-    // user clicks "Check for Errors" — empty-field nagging still stays opt-in.
-    if (!showAlerts && (crossCheckIssues.length > 0 || qualityIssues.length > 0)) {
-      showAlerts = true;
-      userHasCheckedErrors = true;
-    }
 
     // 5. Update In-Page UI Overlay
     Overlay.update(latestReport, { showAlerts, openDrawer });

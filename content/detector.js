@@ -34,7 +34,7 @@
         }
 
         const semantic = window.ErrorGuard.FieldMapper.classify(el);
-        const value = type === 'checkbox' ? (el.checked ? 'true' : '') : el.value;
+        const value = (type === 'checkbox' || type === 'radio') ? (el.checked ? (el.value || 'true') : '') : el.value;
 
         detectedFields.push({
           field: el,

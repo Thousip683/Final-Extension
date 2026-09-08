@@ -360,22 +360,28 @@
     _panelEl.style.right = rightOffset + 'px';
     _panelEl.style.bottom = 'auto'; // Clear bottom property
 
+    // Reset max-height before measuring to get true natural height
+    var viewportH = window.innerHeight;
+    _panelEl.style.maxHeight = (viewportH - 32) + 'px';
+
     // Measure panel height
     var panelHeight = _panelEl.offsetHeight || 520;
     var targetTop = rect.top + (rect.height / 2) - (panelHeight / 2);
 
     // Keep panel strictly inside visible viewport (minimum 16px from top and bottom)
     var minTop = 16;
-    var maxTop = window.innerHeight - panelHeight - 16;
+    var maxTop = viewportH - panelHeight - 16;
     if (maxTop < minTop) {
       targetTop = minTop;
-      _panelEl.style.maxHeight = (window.innerHeight - 32) + 'px';
     } else {
       targetTop = Math.max(minTop, Math.min(targetTop, maxTop));
-      _panelEl.style.maxHeight = 'calc(100vh - 32px)';
     }
 
     _panelEl.style.top = targetTop + 'px';
+
+    // Set strict maxHeight so panel bottom never goes beyond viewport
+    var maxAllowed = viewportH - targetTop - 16;
+    _panelEl.style.maxHeight = maxAllowed + 'px';
   }
 
   function attachPanelListeners() {
@@ -388,6 +394,16 @@
       _cache.delete(location.href);
       showPanel();
     });
+
+    if (_panelEl && !_panelEl._wheelAttached) {
+      _panelEl._wheelAttached = true;
+      _panelEl.addEventListener('wheel', function (e) {
+        var body = _panelEl.querySelector('.eg-pi-body');
+        if (body && !body.contains(e.target)) {
+          body.scrollTop += e.deltaY;
+        }
+      }, { passive: true });
+    }
   }
 
   function openPanel(html) {
@@ -398,7 +414,7 @@
       document.body.appendChild(_panelEl);
     }
     _panelEl.innerHTML = html;
-    _panelEl.style.display = 'block';
+    _panelEl.style.display = 'flex';
     positionPanel();
     attachPanelListeners();
     _isOpen = true;

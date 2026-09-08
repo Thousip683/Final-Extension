@@ -38,6 +38,7 @@
                 code: 'REQUIRED_FIELD_MISSING',
                 field: sType,
                 elementId: field.id,
+                element: field,
                 severity: 'BLOCKING',
                 message: 'Self-declaration checkbox must be confirmed before submitting.',
                 fix: 'Read and check the declaration box.'
@@ -49,6 +50,7 @@
                 code: 'REQUIRED_FIELD_MISSING',
                 field: sType,
                 elementId: field.id,
+                element: field,
                 severity: 'BLOCKING',
                 message: 'Supporting certificate document is required.',
                 fix: 'Upload your original certificate file (PNG, JPG, or PDF).'
@@ -59,6 +61,7 @@
               code: 'REQUIRED_FIELD_MISSING',
               field: sType || field.name || field.id,
               elementId: field.id,
+              element: field,
               severity: 'BLOCKING',
               message: `${semantic ? semantic.label : 'Field'} is required.`,
               fix: `Please enter a value for ${semantic ? semantic.label : 'this field'}.`

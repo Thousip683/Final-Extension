@@ -109,14 +109,14 @@
    */
   function getActiveLang() {
     return (window.ErrorGuard && window.ErrorGuard.Translator &&
-            typeof window.ErrorGuard.Translator.getActiveLang === 'function')
+      typeof window.ErrorGuard.Translator.getActiveLang === 'function')
       ? window.ErrorGuard.Translator.getActiveLang()
       : 'en';
   }
 
   function getActiveLangName() {
     return (window.ErrorGuard && window.ErrorGuard.Translator &&
-            typeof window.ErrorGuard.Translator.getActiveLangName === 'function')
+      typeof window.ErrorGuard.Translator.getActiveLangName === 'function')
       ? window.ErrorGuard.Translator.getActiveLangName()
       : 'English';
   }

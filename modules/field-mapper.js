@@ -32,6 +32,11 @@
       autocomplete: ['bday'],
       types: ['date', 'text']
     },
+    GENDER: {
+      regex: /(gender|^sex$|applicant[_\-\s]?gender|candidate[_\-\s]?gender|student[_\-\s]?gender|लिंग)/i,
+      autocomplete: ['sex'],
+      types: ['select-one', 'text', 'radio']
+    },
     CERTIFICATE_NUMBER: {
       regex: /(certificate[_\-\s]?(no|num|number)|income[_\-\s]?cert|caste[_\-\s]?cert|roll[_\-\s]?no|reg[_\-\s]?(no|num|number)|id[_\-\s]?number)/i,
       autocomplete: [],

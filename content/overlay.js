@@ -89,11 +89,9 @@
           this.toggleStandbyPopover();
           return;
         }
-        if (!this.userHasCheckedErrors) {
-          this.userHasCheckedErrors = true;
-          if (window.ErrorGuard && window.ErrorGuard.reEvaluate) {
-            window.ErrorGuard.reEvaluate({ showAlerts: true, openDrawer: true });
-          }
+        this.userHasCheckedErrors = true;
+        if (window.ErrorGuard && window.ErrorGuard.reEvaluate) {
+          window.ErrorGuard.reEvaluate({ showAlerts: true, openDrawer: true });
         } else {
           this.toggleDrawer();
         }
@@ -110,8 +108,9 @@
         }
         btn.style.pointerEvents = 'none';
         try {
+          this.userHasCheckedErrors = true;
           if (window.ErrorGuard && window.ErrorGuard.reEvaluate) {
-            await window.ErrorGuard.reEvaluate({ showAlerts: this.hasForm ? this.userHasCheckedErrors : false });
+            await window.ErrorGuard.reEvaluate({ showAlerts: true });
           }
         } finally {
           setTimeout(() => {
@@ -141,7 +140,12 @@
               </span>
               <span class="eg-refresh-text">Refresh</span>
             </button>
-            <button type="button" class="eg-drawer-close" id="egDrawerClose">✕</button>
+            <button type="button" class="eg-drawer-close" id="egDrawerClose" title="Close Drawer" aria-label="Close">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
           </div>
         </div>
         <div class="eg-field-navigator" id="egFieldNavigator">
@@ -206,7 +210,7 @@
         <div class="eg-modal-box">
           <div class="eg-modal-header">
             <div class="eg-modal-title">
-              <span class="eg-modal-shield">🛑</span>
+              <span class="eg-modal-shield"> </span>
               <div>
                 <h3>Submission Blocked by Error Guard</h3>
                 <p>Avoidable errors detected in your application before submission.</p>
@@ -582,60 +586,44 @@
         return;
       }
 
-      // if (!showAlerts) {
-      //   // Calm, non-intrusive idle state: No red boxes on blank fields!
-      //   this.clearFieldHighlights();
+      const allFieldIssues = [
+        ...(report.issues?.blocking || []),
+        ...(report.issues?.warnings || [])
+      ];
 
-      //   if (this.aiDocumentReady) {
-      //     this.badgeEl.className = 'eg-floating-badge eg-ai-ready';
-      //     if (badgeStatus) badgeStatus.innerHTML = this.aiAutoFillMode
-      //       ? `✓ Document read • Click Auto-Fill`
-      //       : `✓ Document read • Click Check`;
-      //   } else {
-      //     this.badgeEl.className = 'eg-floating-badge eg-idle';
-      //     if (badgeStatus) badgeStatus.textContent = this.aiAutoFillMode
-      //       ? '🪄 Auto-Fill • Active'
-      //       : '📋 Manual Guard • Click to Check';
-      //   }
+      if (!showAlerts) {
+        if (this.aiDocumentReady) {
+          this.badgeEl.className = 'eg-floating-badge eg-ai-ready';
+          if (badgeStatus) badgeStatus.innerHTML = this.aiAutoFillMode
+            ? `✓ Document read • Click Auto-Fill`
+            : `✓ Document read • Click Check`;
+        } else {
+          this.badgeEl.className = 'eg-floating-badge eg-idle';
+          if (badgeStatus) badgeStatus.textContent = this.aiAutoFillMode
+            ? '🪄 Auto-Fill • Active'
+            : '📋 Manual Guard • Click to Check';
+        }
 
-      //   if (drawerScore) {
-      //     drawerScore.textContent = `Health: Ready to Audit`;
-      //     drawerScore.className = 'eg-health-tag';
-      //   }
-      // } else {
-      //   // User clicked check button or submitted form -> show full audit results
-      //   // Keep checkBtn permanently visible in side-tab for re-checks
+        // Before the user checks for errors, keep form completely clean with zero warnings
+        this.clearFieldHighlights();
+      } else {
+        // User clicked check button or submitted form -> show full audit results
+        if (report.isReady) {
+          this.badgeEl.className = 'eg-floating-badge eg-ready';
+          if (badgeStatus) badgeStatus.textContent = 'READY TO SUBMIT';
+        } else {
+          const blockingCount = report.issues?.blocking?.length || 0;
+          this.badgeEl.className = 'eg-floating-badge eg-not-ready';
+          if (badgeStatus) badgeStatus.textContent = `${blockingCount} Issue${blockingCount > 1 ? 's' : ''} (Action Required)`;
+        }
 
-      //   const allFieldIssues = [
-      //     ...(report.issues?.blocking || []),
-      //     ...(report.issues?.warnings || [])
-      //   ];
-
-      //   // if (report.isReady) {
-      //   //   this.badgeEl.className = 'eg-floating-badge eg-ready';
-      //   //   if (badgeStatus) badgeStatus.textContent = 'READY TO SUBMIT';
-      //   //   if (drawerScore) {
-      //   //     drawerScore.textContent = `Health: ${report.healthScore}% (Ready)`;
-      //   //     drawerScore.className = 'eg-health-tag eg-tag-ready';
-      //   //   }
-      //   // } else {
-      //   //   const blockingCount = report.issues.blocking.length;
-      //   //   this.badgeEl.className = 'eg-floating-badge eg-not-ready';
-      //   //   if (badgeStatus) badgeStatus.textContent = `${blockingCount} Issue${blockingCount > 1 ? 's' : ''} (Action Required)`;
-      //   //   if (drawerScore) {
-      //   //     drawerScore.textContent = `Health: ${report.healthScore}% (Action Required)`;
-      //   //     drawerScore.className = 'eg-health-tag eg-tag-error';
-      //   //   }
-      //   // }
-
-      //   // Inline messages directly under the offending inputs
-      //   if (highlightFields) {
-      //     this.syncFieldHighlights(allFieldIssues);
-      //   } else {
-      //     this.clearFieldHighlights();
-      //   }
-
-      // }
+        // Inline messages directly under the offending inputs
+        if (highlightFields) {
+          this.syncFieldHighlights(allFieldIssues);
+        } else {
+          this.clearFieldHighlights();
+        }
+      }
 
       this.renderDrawerContent(report, showAlerts);
 
@@ -647,6 +635,11 @@
     }
 
     syncFieldHighlights(issues = []) {
+      // Warnings and field error highlights should ONLY show after the user checks for errors
+      if (!this.userHasCheckedErrors) {
+        this.clearFieldHighlights();
+        return;
+      }
       const activeElements = new Set();
 
       for (const issue of issues) {
@@ -658,7 +651,29 @@
 
         let el = issue.element || null;
         if (!el && issue.elementId) el = document.getElementById(issue.elementId);
-        if (!el && issue.field) el = document.querySelector(`[name="${issue.field}"], #${issue.field}`);
+        if (!el && issue.field) {
+          el = document.querySelector(`[name="${issue.field}"], #${issue.field}`);
+          if (!el) {
+            const sType = String(issue.field).toUpperCase();
+            if (sType === 'FULL_NAME' || sType === 'NAME') {
+              el = document.querySelector('input[name*="name" i], input[id*="name" i]');
+            } else if (sType === 'DOB' || sType === 'DATE_OF_BIRTH') {
+              el = document.querySelector('input[type="date"], input[name*="dob" i], input[name*="birth" i], input[id*="dob" i]');
+            } else if (sType === 'CERTIFICATE_NO' || sType === 'CERTIFICATE_NUMBER') {
+              el = document.querySelector('input[name*="cert" i], input[id*="cert" i]');
+            } else if (sType === 'PHONE' || sType === 'MOBILE') {
+              el = document.querySelector('input[type="tel"], input[name*="phone" i], input[name*="mobile" i]');
+            } else if (sType === 'EMAIL') {
+              el = document.querySelector('input[type="email"], input[name*="email" i]');
+            } else if (sType === 'AADHAAR_NUMBER' || sType === 'AADHAAR') {
+              el = document.querySelector('input[name*="aadhaar" i], input[id*="aadhaar" i], input[name*="uid" i]');
+            } else if (sType === 'PAN_NUMBER' || sType === 'PAN') {
+              el = document.querySelector('input[name*="pan" i], input[id*="pan" i]');
+            } else if (sType === 'BANK_ACCOUNT') {
+              el = document.querySelector('input[name*="account" i], input[id*="account" i], input[name*="bank" i]');
+            }
+          }
+        }
 
         if (el) {
           activeElements.add(el);
@@ -1056,25 +1071,142 @@
       `;
 
       if (report.issues.all.length > 0) {
-        html += `<div class="eg-issues-list"><h5>Detected Issues & Corrections</h5>`;
+        const escape = (val) => String(val == null ? '' : val)
+          .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+        // Categorize issues into distinct, user-friendly subsections
+        const categorizeIssue = (issue) => {
+          const code = (issue.code || '').toUpperCase();
+          const field = String(issue.field || '').toUpperCase();
+          const el = issue.element;
+          const isFileInput = (el && el.type === 'file') ||
+            field === 'FILE_UPLOAD' ||
+            (issue.elementId && issue.elementId.toLowerCase().includes('file'));
+
+          // 1. File Upload & Document Quality Issues
+          if (
+            isFileInput ||
+            code.startsWith('FILE_') ||
+            code.startsWith('IMAGE_') ||
+            code.startsWith('DOCUMENT_') ||
+            code === 'WRONG_DOCUMENT_TYPE' ||
+            code === 'DOCUMENT_LOW_QUALITY'
+          ) {
+            return 'upload';
+          }
+
+          // 2. Document & Form Cross-Verification Mismatches
+          if (
+            code.includes('MISMATCH') ||
+            code === 'AUTOFILL_NEEDS_REVIEW' ||
+            code.startsWith('CROSS_')
+          ) {
+            return 'mismatch';
+          }
+
+          // 3. Missing Required Fields
+          if (
+            code === 'REQUIRED_FIELD_MISSING' ||
+            code === 'DECLARATION_NOT_CHECKED' ||
+            code.includes('MISSING')
+          ) {
+            return 'missing';
+          }
+
+          // 4. Incorrect Format & Data Validation Errors
+          return 'format';
+        };
+
+        const CATEGORIES = [
+          { key: 'missing', title: 'Missing Required Fields', icon: '📝' },
+          { key: 'format', title: 'Incorrect or Invalid Data', icon: '✏️' },
+          { key: 'mismatch', title: 'Document & Form Mismatches', icon: '🔍' },
+          { key: 'upload', title: 'File Upload & Document Quality', icon: '📁' }
+        ];
+
+        // Group the issues
+        const grouped = { missing: [], format: [], mismatch: [], upload: [] };
         for (const issue of report.issues.all) {
-          const isBlocking = issue.severity === 'BLOCKING';
+          const catKey = categorizeIssue(issue);
+          if (grouped[catKey]) {
+            grouped[catKey].push(issue);
+          } else {
+            grouped.format.push(issue);
+          }
+        }
+
+        html += `<div class="eg-issues-list"><h5>Detected Issues & Corrections (${report.issues.all.length})</h5>`;
+
+        for (const cat of CATEGORIES) {
+          const catIssues = grouped[cat.key];
+          if (!catIssues || catIssues.length === 0) continue;
+
+          const hasBlocking = catIssues.some(i => i.severity === 'BLOCKING');
+          const countText = `${catIssues.length} ${catIssues.length === 1 ? 'error' : 'errors'}`;
+
           html += `
-            <div class="eg-issue-card ${isBlocking ? 'eg-card-blocking' : 'eg-card-warning'}">
-              <div class="eg-card-top">
-                <span class="eg-card-severity">${isBlocking ? '🛑 BLOCKING' : '⚠️ WARNING'}</span>
-                <span class="eg-card-code">${issue.code}</span>
+            <details class="eg-issue-category-group eg-category-accordion">
+              <summary class="eg-cat-summary">
+                <div class="eg-cat-summary-left">
+                  <span class="eg-cat-icon">${cat.icon}</span>
+                  <span class="eg-cat-title-text">${escape(cat.title)}</span>
+                </div>
+                <div class="eg-cat-summary-right">
+                  <span class="eg-cat-count ${hasBlocking ? 'eg-cat-count-blocking' : ''}">${countText}</span>
+                  <span class="eg-cat-arrow">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                  </span>
+                </div>
+              </summary>
+              <div class="eg-cat-items">
+          `;
+
+          for (const issue of catIssues) {
+            const isBlocking = issue.severity === 'BLOCKING';
+            const targetId = issue.elementId || (issue.element && issue.element.id) || issue.field || '';
+            html += `
+              <details class="eg-issue-card eg-issue-accordion ${isBlocking ? 'eg-card-blocking' : 'eg-card-warning'}">
+                <summary class="eg-card-summary">
+                  <div class="eg-summary-left">
+                    <span class="eg-summary-icon">${isBlocking ? ' ' : '⚠️'}</span>
+                    <span class="eg-card-msg">${escape(issue.message)}</span>
+                  </div>
+                  <span class="eg-accordion-arrow">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                  </span>
+                </summary>
+                <div class="eg-card-body">
+                  <div class="eg-card-top">
+                    <span class="eg-card-severity">${isBlocking ? '  BLOCKING' : '  WARNING'}</span>
+                    <span class="eg-card-code">${escape(issue.code)}</span>
+                  </div>
+                  ${issue.fix ? `<div class="eg-card-fix"><strong>Suggested Fix:</strong> ${escape(issue.fix)}</div>` : ''}
+                  ${issue.formValue || issue.documentValue ? `
+                    <div class="eg-card-chips">
+                      ${issue.formValue ? `<span class="eg-card-chip">Form: <strong>${escape(issue.formValue)}</strong></span>` : ''}
+                      ${issue.documentValue ? `<span class="eg-card-chip">Document: <strong>${escape(issue.documentValue)}</strong></span>` : ''}
+                    </div>
+                  ` : ''}
+                  ${targetId ? `
+                    <button type="button" class="eg-jump-btn" data-target="${escape(targetId)}">
+                       Jump to Field
+                    </button>
+                  ` : ''}
+                </div>
+              </details>
+            `;
+          }
+
+          html += `
               </div>
-              <p class="eg-card-msg">${issue.message}</p>
-              ${issue.fix ? `<div class="eg-card-fix">💡 <strong>Suggested Fix:</strong> ${issue.fix}</div>` : ''}
-              ${issue.elementId ? `
-                <button type="button" class="eg-jump-btn" data-target="${issue.elementId}">
-                  🔍 Jump to Field
-                </button>
-              ` : ''}
-            </div>
+            </details>
           `;
         }
+
         html += `</div>`;
       }
 
@@ -1119,8 +1251,12 @@
       // Attach jump buttons
       body.querySelectorAll('.eg-jump-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
-          const targetId = e.target.getAttribute('data-target');
-          const targetEl = document.getElementById(targetId);
+          e.stopPropagation();
+          const targetId = btn.getAttribute('data-target');
+          let targetEl = targetId ? document.getElementById(targetId) : null;
+          if (!targetEl && targetId) {
+            targetEl = document.querySelector(`[name="${targetId}"], #${targetId}`);
+          }
           if (targetEl) {
             targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
             targetEl.focus();
@@ -1397,7 +1533,7 @@
     // ─── AI Auto-Fill & Auto-Correct In-Page Components ───
     showAutoFillBanner(docData, onApply, fieldMap = null, previewItems = null) {
       this.hideAutoFillBanner();
-      if (!docData || (!docData.name && !docData.dob && !docData.certificateNo)) return;
+      if (!docData || (!docData.name && !docData.dob && !docData.certificateNo && !docData.gender && !docData.phone)) return;
 
       const banner = document.createElement('div');
       banner.id = 'eg-autofill-banner';
@@ -1438,27 +1574,35 @@
         for (const item of previewItems) {
           if (!item || !item.label) continue;
           if (!item.value) continue;
+          const key = item.fieldKey || item.label;
           const pct = typeof item.confidence === 'number' ? ` (${Math.round(item.confidence * 100)}%)` : '';
+          let innerHtml = '';
+          let cls = 'eg-autofill-tag';
           if (item.conflict) {
-            tagsHtml += `<span class="eg-autofill-tag eg-tag-conflict">${esc(item.label)}: <strong>${esc(item.value)}</strong> — differs from what you typed, left as is</span>`;
+            cls += ' eg-tag-conflict';
+            innerHtml = `${esc(item.label)}: <strong>${esc(item.value)}</strong> — differs from what you typed, left as is`;
           } else if (item.needsReview) {
-            tagsHtml += `<span class="eg-autofill-tag eg-tag-review">⚠ ${esc(item.label)}: <strong>${esc(item.value)}</strong> — confirm${pct}</span>`;
+            cls += ' eg-tag-review';
+            innerHtml = `⚠ ${esc(item.label)}: <strong>${esc(item.value)}</strong> — confirm${pct}`;
           } else {
-            tagsHtml += `<span class="eg-autofill-tag">${esc(item.label)}: <strong>${esc(item.value)}</strong></span>`;
+            innerHtml = `${esc(item.label)}: <strong>${esc(item.value)}</strong>`;
           }
+          tagsHtml += `<span class="${cls}" data-field-key="${esc(key)}" data-label="${esc(item.label)}"><span class="eg-tag-text">${innerHtml}</span><button type="button" class="eg-tag-remove-btn" data-key="${esc(key)}" title="Remove ${esc(item.label)}" aria-label="Remove ${esc(item.label)}">✕</button></span>`;
         }
-      } else if (fieldMap && typeof fieldMap === 'object') {
+      } else if (fieldMap && typeof fieldMap === 'object' && Object.keys(fieldMap).length > 0) {
         for (const [key, value] of Object.entries(fieldMap)) {
           if (!value || SKIP_PREVIEW.has(key)) continue;
           const meta = FIELD_META[key];
           if (!meta) continue; // skip unmapped/unknown keys
-          tagsHtml += `<span class="eg-autofill-tag">${meta.icon} ${meta.label}: <strong>${value}</strong></span>`;
+          tagsHtml += `<span class="eg-autofill-tag" data-field-key="${esc(key)}" data-label="${esc(meta.label)}"><span class="eg-tag-text">${meta.icon} ${meta.label}: <strong>${esc(value)}</strong></span><button type="button" class="eg-tag-remove-btn" data-key="${esc(key)}" title="Remove ${esc(meta.label)}" aria-label="Remove ${esc(meta.label)}">✕</button></span>`;
         }
-      } else {
-        // Legacy fallback: only show name / dob / id
-        if (docData.name) tagsHtml += `<span class="eg-autofill-tag">👤 Name: <strong>${docData.name}</strong></span>`;
-        if (docData.dob) tagsHtml += `<span class="eg-autofill-tag">📅 DOB: <strong>${docData.dob}</strong></span>`;
-        if (docData.certificateNo) tagsHtml += `<span class="eg-autofill-tag">🆔 ID: <strong>${docData.certificateNo}</strong></span>`;
+      } else if (docData) {
+        // Legacy fallback: only show name / dob / gender / id
+        if (docData.name) tagsHtml += `<span class="eg-autofill-tag" data-field-key="name" data-label="Name"><span class="eg-tag-text">👤 Name: <strong>${esc(docData.name)}</strong></span><button type="button" class="eg-tag-remove-btn" data-key="name" title="Remove Name" aria-label="Remove Name">✕</button></span>`;
+        if (docData.dob) tagsHtml += `<span class="eg-autofill-tag" data-field-key="dob" data-label="Date of Birth"><span class="eg-tag-text">📅 DOB: <strong>${esc(docData.dob)}</strong></span><button type="button" class="eg-tag-remove-btn" data-key="dob" title="Remove Date of Birth" aria-label="Remove Date of Birth">✕</button></span>`;
+        if (docData.gender) tagsHtml += `<span class="eg-autofill-tag" data-field-key="gender" data-label="Gender"><span class="eg-tag-text">⚧ Gender: <strong>${esc(docData.gender)}</strong></span><button type="button" class="eg-tag-remove-btn" data-key="gender" title="Remove Gender" aria-label="Remove Gender">✕</button></span>`;
+        if (docData.certificateNo) tagsHtml += `<span class="eg-autofill-tag" data-field-key="certificateNo" data-label="Certificate No."><span class="eg-tag-text">🆔 ID: <strong>${esc(docData.certificateNo)}</strong></span><button type="button" class="eg-tag-remove-btn" data-key="certificateNo" title="Remove Certificate No." aria-label="Remove Certificate No.">✕</button></span>`;
+        if (docData.phone) tagsHtml += `<span class="eg-autofill-tag" data-field-key="phone" data-label="Mobile"><span class="eg-tag-text">📞 Mobile: <strong>${esc(docData.phone)}</strong></span><button type="button" class="eg-tag-remove-btn" data-key="phone" title="Remove Mobile" aria-label="Remove Mobile">✕</button></span>`;
       }
 
       const fieldCount = tagsHtml.split('eg-autofill-tag').length - 1;
@@ -1479,7 +1623,7 @@
         </div>
         <div class="eg-autofill-footer">
           <button type="button" class="eg-btn-autofill" id="egApplyAutoFill">
-            🪄 1-Click Auto-Fill Form
+           1-Click Auto-Fill Form
           </button>
           <button type="button" class="eg-btn-dismiss-autofill" id="egDismissAutoFill">
             Dismiss
@@ -1489,10 +1633,67 @@
 
       document.body.appendChild(banner);
 
+      const excludedKeys = new Set();
+
+      const updateSubtitle = () => {
+        const remainingTags = banner.querySelectorAll('.eg-autofill-tag:not(.eg-tag-removing)');
+        const count = remainingTags.length;
+        const subtitleEl = banner.querySelector('.eg-autofill-subtitle');
+        const applyBtn = banner.querySelector('#egApplyAutoFill');
+        if (subtitleEl) {
+          if (count === 0) {
+            subtitleEl.textContent = 'All suggested fields have been removed.';
+          } else {
+            subtitleEl.textContent = `${count} field${count !== 1 ? 's' : ''} ready to fill. Click to auto-fill form:`;
+          }
+        }
+        if (applyBtn) {
+          if (count === 0) {
+            applyBtn.disabled = true;
+            applyBtn.style.opacity = '0.4';
+            applyBtn.style.cursor = 'not-allowed';
+          } else {
+            applyBtn.disabled = false;
+            applyBtn.style.opacity = '1';
+            applyBtn.style.cursor = 'pointer';
+          }
+        }
+      };
+
+      banner.querySelectorAll('.eg-tag-remove-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const key = btn.getAttribute('data-key');
+          const tag = btn.closest('.eg-autofill-tag');
+          if (key) {
+            excludedKeys.add(key);
+            excludedKeys.add(key.toLowerCase());
+          }
+          if (tag) {
+            const label = tag.getAttribute('data-label');
+            if (label) {
+              excludedKeys.add(label);
+              excludedKeys.add(label.toLowerCase());
+            }
+            const fieldKey = tag.getAttribute('data-field-key');
+            if (fieldKey) {
+              excludedKeys.add(fieldKey);
+              excludedKeys.add(fieldKey.toLowerCase());
+            }
+            tag.classList.add('eg-tag-removing');
+            setTimeout(() => {
+              tag.remove();
+              updateSubtitle();
+            }, 180);
+          }
+          updateSubtitle();
+        });
+      });
+
       document.getElementById('egCloseAutoFill').addEventListener('click', () => this.hideAutoFillBanner());
       document.getElementById('egDismissAutoFill').addEventListener('click', () => this.hideAutoFillBanner());
       document.getElementById('egApplyAutoFill').addEventListener('click', () => {
-        if (typeof onApply === 'function') onApply();
+        if (typeof onApply === 'function') onApply(excludedKeys);
         this.hideAutoFillBanner();
       });
     }
@@ -1543,7 +1744,7 @@
       banner.innerHTML = `
         <div class="eg-wrongdoc-header">
           <div class="eg-wrongdoc-header-left">
-            <span class="eg-wrongdoc-icon">🛑</span>
+            <span class="eg-wrongdoc-icon"> </span>
             <div>
               <strong class="eg-wrongdoc-title">Wrong Document Detected!</strong>
               <p class="eg-wrongdoc-subtitle">
