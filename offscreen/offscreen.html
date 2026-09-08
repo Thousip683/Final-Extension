@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>ErrorGuard on-device reader</title>
+  </head>
+  <body>
+    <!--
+      This page is never shown. It exists because document recognition needs a
+      DOM (canvas, Web Workers, WebAssembly), which a service worker does not
+      have. Everything here runs locally: no network request is made.
+    -->
+    <script type="module" src="offscreen.js"></script>
+  </body>
+</html>

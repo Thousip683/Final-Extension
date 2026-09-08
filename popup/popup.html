@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="sand">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pre-Submission Error Guard</title>
+  <link rel="stylesheet" href="popup.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <header class="popup-header">
+    <div class="header-left">
+      <div class="header-icon" aria-label="Error Guard">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 19 6v5c0 4.5-2.8 8-7 10-4.2-2-7-5.5-7-10V6l7-3Z"/><path d="m9 12 2 2 4-4"/></svg>
+      </div>
+      <div>
+        <h1>Error Guard</h1>
+        <p id="portalNameText">Active Portal: Official Form</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button type="button" id="refreshBtn" class="icon-btn" title="Re-scan Form" aria-label="Re-scan form">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6v5h-5M4 18v-5h5M6.1 9a7 7 0 0 1 11.5-2.6L20 9M4 15l2.4 2.6A7 7 0 0 0 17.9 15"/></svg>
+      </button>
+    </div>
+  </header>
+  <main class="popup-content">
+    <div class="hero-card" id="heroCard">
+      <div class="health-gauge">
+        <svg viewBox="0 0 36 36" class="circular-chart" id="chartSvg">
+          <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+          <path class="circle" id="circleProgress" stroke-dasharray="85, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+          <text x="18" y="20.35" class="percentage" id="scoreText">--%</text>
+        </svg>
+      </div>
+      <div class="hero-info">
+        <span class="hero-status-pill" id="statusPill">ANALYZING...</span>
+        <h2 id="statusHeadline">Application Health</h2>
+        <p id="statusDesc">Inspecting inputs and supporting documents...</p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><h3>Verification Checklist</h3><span class="card-count" id="checklistRatio">--</span></div>
+      <div class="checklist-group">
+        <div class="check-category"><span class="category-title">FORM COMPLETION</span><div class="check-rows"><div class="check-row" id="chkForm"><span class="chk-icon">○</span><span class="chk-label">Mandatory fields filled</span></div></div></div>
+        <div class="check-category"><span class="category-title">DOCUMENT VALIDATION</span><div class="check-rows"><div class="check-row" id="chkDocUploaded"><span class="chk-icon">○</span><span class="chk-label">Certificate uploaded</span></div><div class="check-row" id="chkDocSize"><span class="chk-icon">○</span><span class="chk-label">File size within portal limit</span></div></div></div>
+        <div class="check-category"><span class="category-title">CROSS-VERIFICATION</span><div class="check-rows"><div class="check-row" id="chkNameMatch"><span class="chk-icon">○</span><span class="chk-label">Full Name matches document</span></div><div class="check-row" id="chkDobMatch"><span class="chk-icon">○</span><span class="chk-label">Date of Birth matches document</span></div></div></div>
+      </div>
+    </div>
+    <div class="card mode-card" id="modeCard">
+      <div class="card-header">
+        <div class="mode-card-title">
+          <span class="mode-icon" id="modeIcon">📋</span>
+          <h3 id="modeCardHeading">Extension Mode</h3>
+        </div>
+        <span class="mode-badge" id="modeBadge">Manual Guard</span>
+      </div>
+      <p class="mode-desc" id="modeDesc">Fill out your form, upload documents, then click <strong>"Check for Errors"</strong> to review issues in the sidebar only.</p>
+      <div class="mode-toggle-row">
+        <button type="button" class="mode-toggle-btn" id="modeToggleBtn">
+          <span id="modeToggleBtnIcon">🤖</span>
+          <span id="modeToggleBtnText">Switch to AI Auto-Fill</span>
+        </button>
+      </div>
+    </div>
+    <div class="card" id="issuesCard">
+      <div class="card-header"><h3>Pre-Submission Issues</h3><span class="badge-issues" id="issuesCountBadge">0</span></div>
+      <div class="issues-container" id="issuesContainer"><div class="empty-issues"><span class="empty-icon">✓</span><p>No blocking issues detected. Your application is in good standing.</p></div></div>
+    </div>
+  </main>
+  <footer class="popup-footer"><div class="privacy-note"><span aria-hidden="true">⌁</span> <strong>Local-first:</strong> Processed on your device. Zero cloud uploads.</div></footer>
+  <script src="popup.js"></script>
+</body>
+</html>

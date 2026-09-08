@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>ErrorGuard reader</title>
+  </head>
+  <body>
+    <!--
+      Sandboxed reader frame. The bundled recognition code (OpenCV/Emscripten
+      glue) needs to compile functions at runtime, which extension pages forbid,
+      so it runs here instead. This frame has no extension privileges and no
+      network access is made: it receives bytes and asset URLs by postMessage
+      from the offscreen page and answers with the reading result.
+    -->
+    <script type="module" src="sandbox.js"></script>
+  </body>
+</html>

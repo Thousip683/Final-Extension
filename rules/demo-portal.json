@@ -1,0 +1,113 @@
+{
+  "portalId": "ap_scholarship_portal",
+  "name": "National Scholarship & Certificate Portal",
+  "version": "1.0.0",
+  "matchUrlPatterns": [
+    "*demo-portal*",
+    "*localhost*",
+    "*127.0.0.1*",
+    "*index.html*"
+  ],
+  "requiredFields": [
+    "FULL_NAME",
+    "DOB",
+    "AADHAAR_NUMBER",
+    "PAN_NUMBER",
+    "CATEGORY",
+    "EMAIL",
+    "PHONE",
+    "FILE_UPLOAD",
+    "DECLARATION"
+  ],
+  "documentSlots": {
+    "aadhaarUpload": ["AADHAAR"],
+    "aadhaar_file": ["AADHAAR"],
+    "panUpload": ["PAN"],
+    "pan_file": ["PAN"],
+    "incomeCertUpload": ["INCOME_CERTIFICATE", "CERTIFICATE"],
+    "income_certificate": ["INCOME_CERTIFICATE", "CERTIFICATE"],
+    "casteCertUpload": ["CASTE_CERTIFICATE", "CERTIFICATE"],
+    "caste_certificate": ["CASTE_CERTIFICATE", "CERTIFICATE"]
+  },
+  "fileRules": {
+    "maxSizeBytes": 2097152,
+    "acceptedMimeTypes": [
+      "image/png",
+      "image/jpeg",
+      "application/pdf"
+    ],
+    "acceptedExtensions": [
+      ".png",
+      ".jpg",
+      ".jpeg",
+      ".pdf"
+    ],
+    "minWidth": 400,
+    "minHeight": 300,
+    "maxDimensions": {
+      "width": 5000,
+      "height": 5000
+    }
+  },
+  "fieldRules": {
+    "phone": {
+      "pattern": "^[6-9]\\d{9}$",
+      "minLength": 10,
+      "maxLength": 10,
+      "description": "Mobile number must start with a digit between 6 and 9 and contain exactly 10 digits."
+    },
+    "bankAccount": {
+      "pattern": "^\\d{9,18}$",
+      "minLength": 9,
+      "maxLength": 18,
+      "description": "Bank Account Number must contain 9 to 18 numeric digits."
+    },
+    "ifscCode": {
+      "pattern": "^[A-Z]{4}0[A-Z0-9]{6}$",
+      "minLength": 11,
+      "maxLength": 11,
+      "description": "IFSC Code must be 11 characters: 4 bank letters, digit 0, and 6 branch characters."
+    },
+    "pincode": {
+      "pattern": "^[1-9][0-9]{5}$",
+      "minLength": 6,
+      "maxLength": 6,
+      "description": "Indian Postal PIN Code must be 6 digits and cannot start with 0."
+    },
+    "aadhaar": {
+      "pattern": "^[2-9][0-9]{11}$",
+      "minLength": 12,
+      "maxLength": 12,
+      "description": "UIDAI Aadhaar number must be 12 digits and cannot start with 0 or 1."
+    },
+    "pan": {
+      "pattern": "^[A-Z]{3}P[A-Z][0-9]{4}[A-Z]$",
+      "minLength": 10,
+      "maxLength": 10,
+      "description": "Individual applicant PAN where 4th character is P for Person."
+    }
+  },
+  "crossChecks": {
+    "verifyName": {
+      "enabled": true,
+      "fuzzyThreshold": 0.88,
+      "exactThreshold": 1.0
+    },
+    "verifyDob": {
+      "enabled": true,
+      "exactMatch": true
+    },
+    "verifyAadhaar": {
+      "enabled": true,
+      "exactMatch": true
+    },
+    "verifyPan": {
+      "enabled": true,
+      "exactMatch": true
+    }
+  },
+  "submissionGuard": {
+    "preventSubmitOnBlocking": true,
+    "allowUserOverride": false
+  }
+}

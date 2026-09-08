@@ -1,0 +1,92 @@
+{
+  "manifest_version": 3,
+  "name": "Pre-Submission Error Guard for Official Forms",
+  "version": "1.1.0",
+  "description": "Reads your documents on your own device and checks official forms before you submit them.",
+  "permissions": [
+    "activeTab",
+    "storage",
+    "offscreen"
+  ],
+  "host_permissions": [
+    "*://*/*",
+    "file:///*"
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'",
+    "sandbox": "sandbox allow-scripts; script-src 'self' 'unsafe-eval' 'wasm-unsafe-eval'; object-src 'self'"
+  },
+  "background": {
+    "service_worker": "background/service-worker.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*/*",
+        "file:///*"
+      ],
+      "js": [
+        "utils/logger.js",
+        "utils/normalize.js",
+        "utils/storage.js",
+        "rules/schemas.js",
+        "modules/field-mapper.js",
+        "modules/rule-engine.js",
+        "modules/form-validator.js",
+        "modules/file-validator.js",
+        "modules/image-quality.js",
+        "modules/google-vision.js",
+        "modules/local-pipeline.js",
+        "modules/ocr-engine.js",
+        "modules/document-parser.js",
+        "modules/matcher.js",
+        "modules/error-engine.js",
+        "content/detector.js",
+        "content/overlay.js",
+        "content/field-helper.js",
+        "content/translator.js",
+        "content/page-info.js",
+        "content/content.js"
+      ],
+      "css": [
+        "content/content.css"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "rules/demo-portal.json",
+        "assets/*",
+        "lib/*",
+        "engine/*",
+        "models/*",
+        "ort/*",
+        "sandbox/*"
+      ],
+      "matches": [
+        "*://*/*",
+        "file:///*"
+      ]
+    }
+  ],
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "assets/icon16.png",
+      "48": "assets/icon48.png",
+      "128": "assets/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "assets/icon16.png",
+    "48": "assets/icon48.png",
+    "128": "assets/icon128.png"
+  },
+  "sandbox": {
+    "pages": [
+      "sandbox/sandbox.html"
+    ]
+  }
+}
