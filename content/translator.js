@@ -28,33 +28,33 @@
 
   // Per-origin map: { 'hostname': 'langCode' } — so each site remembers independently
   var STORAGE_KEY = 'EG_TRANSLATE_LANG_MAP';
-  var BANNER_ID   = 'eg-translate-banner';
-  var BTN_ID      = 'eg-translate-btn';
+  var BANNER_ID = 'eg-translate-banner';
+  var BTN_ID = 'eg-translate-btn';
 
   var LANGUAGES = [
-    { code: 'hi', label: 'हिन्दी',    name: 'Hindi' },
-    { code: 'ta', label: 'தமிழ்',     name: 'Tamil' },
-    { code: 'te', label: 'తెలుగు',    name: 'Telugu' },
-    { code: 'kn', label: 'ಕನ್ನಡ',     name: 'Kannada' },
-    { code: 'ml', label: 'മലയാളം',    name: 'Malayalam' },
-    { code: 'mr', label: 'मराठी',     name: 'Marathi' },
-    { code: 'bn', label: 'বাংলা',     name: 'Bengali' },
-    { code: 'gu', label: 'ગુજરાતી',   name: 'Gujarati' },
-    { code: 'pa', label: 'ਪੰਜਾਬੀ',    name: 'Punjabi' },
-    { code: 'or', label: 'ଓଡ଼ିଆ',     name: 'Odia' },
-    { code: 'en', label: 'English',   name: 'English (Original)' }
+    { code: 'hi', label: 'हिन्दी', name: 'Hindi' },
+    { code: 'ta', label: 'தமிழ்', name: 'Tamil' },
+    { code: 'te', label: 'తెలుగు', name: 'Telugu' },
+    { code: 'kn', label: 'ಕನ್ನಡ', name: 'Kannada' },
+    { code: 'ml', label: 'മലയാളം', name: 'Malayalam' },
+    { code: 'mr', label: 'मराठी', name: 'Marathi' },
+    { code: 'bn', label: 'বাংলা', name: 'Bengali' },
+    { code: 'gu', label: 'ગુજરાતી', name: 'Gujarati' },
+    { code: 'pa', label: 'ਪੰਜਾਬੀ', name: 'Punjabi' },
+    { code: 'or', label: 'ଓଡ଼ିଆ', name: 'Odia' },
+    { code: 'en', label: 'English', name: 'English (Original)' }
   ];
 
   // ─── State ────────────────────────────────────────────────────────────────
 
-  var _currentLang   = 'en';   // active language code
+  var _currentLang = 'en';   // active language code
   var _isTranslating = false;
   // Map of original text → translated text, keyed by language code
   var _translationCache = {};
   // DOM nodes and their original/translated text saved for in-place swap
   // Entry: { node: TextNode|Element, original: string, attr?: string }
   var _swappedNodes = [];
-  var _dropdownEl   = null;
+  var _dropdownEl = null;
   var _dropdownOpen = false;
 
   // ─── API Key ──────────────────────────────────────────────────────────────
@@ -68,7 +68,7 @@
         });
         if (stored && stored.google_gemini_api_key) key = stored.google_gemini_api_key.trim();
       }
-    } catch (_) {}
+    } catch (_) { }
     return key;
   }
 
@@ -257,7 +257,7 @@
         var originalText = u.node.textContent;
         _swappedNodes.push({ node: u.node, original: originalText, attr: null });
         // Preserve leading/trailing whitespace that was in the original node
-        var leading  = originalText.match(/^\s*/)[0];
+        var leading = originalText.match(/^\s*/)[0];
         var trailing = originalText.match(/\s*$/)[0];
         u.node.textContent = leading + translation + trailing;
       }
@@ -275,7 +275,7 @@
         } else if (entry.node.nodeType === Node.TEXT_NODE) {
           entry.node.textContent = entry.original;
         }
-      } catch (_) {}
+      } catch (_) { }
     });
     _swappedNodes = [];
   }
@@ -296,11 +296,11 @@
     banner.setAttribute('aria-live', 'polite');
     banner.innerHTML =
       '<div class="eg-tr-inner">' +
-        '<div class="eg-tr-spinner"></div>' +
-        '<div class="eg-tr-body">' +
-          '<strong class="eg-tr-title">Translating form…</strong>' +
-          '<p class="eg-tr-sub">Gemini AI is translating this page into <em>' + langName + '</em>. This takes a few seconds.</p>' +
-        '</div>' +
+      '<div class="eg-tr-spinner"></div>' +
+      '<div class="eg-tr-body">' +
+      '<strong class="eg-tr-title">Translating form…</strong>' +
+      '<p class="eg-tr-sub">Gemini AI is translating this page into <em>' + langName + '</em>. This takes a few seconds.</p>' +
+      '</div>' +
       '</div>';
     document.body.appendChild(banner);
   }
@@ -313,13 +313,13 @@
     banner.setAttribute('role', 'status');
     banner.innerHTML =
       '<div class="eg-tr-inner">' +
-        '<span class="eg-tr-icon">🌐</span>' +
-        '<div class="eg-tr-body">' +
-          '<strong class="eg-tr-title">Translated to ' + langName + '</strong>' +
-          '<p class="eg-tr-sub">All form labels have been translated. Your inputs are unchanged.</p>' +
-        '</div>' +
-        '<button type="button" class="eg-tr-close eg-tr-restore-btn" id="egTranslateRestoreInline" title="Restore English">Restore English</button>' +
-        '<button type="button" class="eg-tr-close" id="egTranslateDismissBanner" aria-label="Close">✕</button>' +
+      '<span class="eg-tr-icon">🌐</span>' +
+      '<div class="eg-tr-body">' +
+      '<strong class="eg-tr-title">Translated to ' + langName + '</strong>' +
+      '<p class="eg-tr-sub">All form labels have been translated. Your inputs are unchanged.</p>' +
+      '</div>' +
+      '<button type="button" class="eg-tr-close eg-tr-restore-btn" id="egTranslateRestoreInline" title="Restore English">Restore English</button>' +
+      '<button type="button" class="eg-tr-close" id="egTranslateDismissBanner" aria-label="Close">✕</button>' +
       '</div>';
     document.body.appendChild(banner);
 
@@ -348,12 +348,12 @@
     banner.setAttribute('role', 'alert');
     banner.innerHTML =
       '<div class="eg-tr-inner">' +
-        '<span class="eg-tr-icon">⚠️</span>' +
-        '<div class="eg-tr-body">' +
-          '<strong class="eg-tr-title">Translation failed</strong>' +
-          '<p class="eg-tr-sub">' + escapeHtml(message) + '</p>' +
-        '</div>' +
-        '<button type="button" class="eg-tr-close" id="egTranslateErrClose" aria-label="Close">✕</button>' +
+      '<span class="eg-tr-icon">⚠️</span>' +
+      '<div class="eg-tr-body">' +
+      '<strong class="eg-tr-title">Translation failed</strong>' +
+      '<p class="eg-tr-sub">' + escapeHtml(message) + '</p>' +
+      '</div>' +
+      '<button type="button" class="eg-tr-close" id="egTranslateErrClose" aria-label="Close">✕</button>' +
       '</div>';
     document.body.appendChild(banner);
     document.getElementById('egTranslateErrClose').addEventListener('click', removeBanner);
@@ -399,14 +399,22 @@
       dropdown.appendChild(item);
     });
 
-    // Position dropdown above the button
+    // Position dropdown to the left of the side-tab button
     document.body.appendChild(dropdown);
     _dropdownEl = dropdown;
 
     // Position it
     var rect = btn.getBoundingClientRect();
-    dropdown.style.bottom = (window.innerHeight - rect.top + 8) + 'px';
-    dropdown.style.right = (window.innerWidth - rect.right) + 'px';
+    var badge = document.getElementById('error-guard-badge');
+    var badgeRect = badge ? badge.getBoundingClientRect() : rect;
+
+    dropdown.style.right = (window.innerWidth - badgeRect.left + 12) + 'px';
+    dropdown.style.bottom = 'auto';
+
+    var ddHeight = dropdown.offsetHeight || 280;
+    var targetTop = rect.top + (rect.height / 2) - (ddHeight / 2);
+    targetTop = Math.max(16, Math.min(targetTop, window.innerHeight - ddHeight - 16));
+    dropdown.style.top = targetTop + 'px';
 
     // Close on outside click
     setTimeout(function () {
@@ -454,7 +462,7 @@
           chrome.storage.local.set({ [STORAGE_KEY]: map });
         });
       }
-    } catch (_) {}
+    } catch (_) { }
 
     // Clear field-helper explanation cache and any open tooltips so they
     // will be re-fetched in the new language when the user clicks next time
@@ -538,7 +546,7 @@
     btn.className = 'eg-translate-btn';
     btn.setAttribute('title', 'Translate this form');
     btn.setAttribute('aria-label', 'Translate form to your language');
-    btn.innerHTML = '🌐';
+    btn.innerHTML = '<span class="eg-tab-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></span><span class="eg-tab-label">Translate</span>';
 
     btn.addEventListener('click', function (e) {
       e.stopPropagation();
@@ -563,17 +571,17 @@
 
     if (_isTranslating) {
       btn.classList.add('eg-tr-btn-loading');
-      btn.innerHTML = '<span class="eg-tr-btn-spinner"></span>';
+      btn.innerHTML = '<span class="eg-tab-icon"><span class="eg-tr-btn-spinner"></span></span><span class="eg-tab-label">...</span>';
       btn.disabled = true;
     } else if (_currentLang !== 'en') {
       btn.classList.remove('eg-tr-btn-loading');
-      btn.innerHTML = '🌐';
+      btn.innerHTML = '<span class="eg-tab-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></span><span class="eg-tab-label">Translate</span>';
       btn.disabled = false;
       btn.title = 'Translated to ' + (LANGUAGES.find(function (l) { return l.code === _currentLang; })?.name || _currentLang) + ' — click to change';
       btn.classList.add('eg-tr-btn-active');
     } else {
       btn.classList.remove('eg-tr-btn-loading', 'eg-tr-btn-active');
-      btn.innerHTML = '🌐';
+      btn.innerHTML = '<span class="eg-tab-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></span><span class="eg-tab-label">Translate</span>';
       btn.disabled = false;
       btn.title = 'Translate this form';
     }
@@ -590,7 +598,7 @@
       try {
         if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
           chrome.storage.local.get([STORAGE_KEY], function (res) {
-            var map  = (res && res[STORAGE_KEY]) || {};
+            var map = (res && res[STORAGE_KEY]) || {};
             var saved = map[location.hostname];
             if (saved && saved !== 'en') {
               // Small delay so the page is fully painted
@@ -598,7 +606,7 @@
             }
           });
         }
-      } catch (_) {}
+      } catch (_) { }
     },
 
     /** Returns the current active language code (e.g. 'te', 'hi', 'en'). */

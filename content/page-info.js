@@ -29,14 +29,14 @@
   ];
 
   var PANEL_ID = 'eg-pageinfo-panel';
-  var BTN_ID   = 'eg-pageinfo-btn';
+  var BTN_ID = 'eg-pageinfo-btn';
 
   // ─── State ────────────────────────────────────────────────────────────────
 
   // Cache per full URL — different pages on the same site may be different forms
   var _cache = new Map();   // url → { info, timestamp }
-  var _panelEl    = null;
-  var _isOpen     = false;
+  var _panelEl = null;
+  var _isOpen = false;
   var _isFetching = false;
 
   // ─── Helpers ──────────────────────────────────────────────────────────────
@@ -50,20 +50,20 @@
         });
         if (stored && stored.google_gemini_api_key) key = stored.google_gemini_api_key.trim();
       }
-    } catch (_) {}
+    } catch (_) { }
     return key;
   }
 
   function getActiveLangName() {
     return (window.ErrorGuard && window.ErrorGuard.Translator &&
-            typeof window.ErrorGuard.Translator.getActiveLangName === 'function')
+      typeof window.ErrorGuard.Translator.getActiveLangName === 'function')
       ? window.ErrorGuard.Translator.getActiveLangName()
       : 'English';
   }
 
   function getActiveLang() {
     return (window.ErrorGuard && window.ErrorGuard.Translator &&
-            typeof window.ErrorGuard.Translator.getActiveLang === 'function')
+      typeof window.ErrorGuard.Translator.getActiveLang === 'function')
       ? window.ErrorGuard.Translator.getActiveLang()
       : 'en';
   }
@@ -77,13 +77,13 @@
   // ─── Page Context Scraper ─────────────────────────────────────────────────
 
   function scrapePageContext() {
-    var url       = location.href;
-    var hostname  = location.hostname;
+    var url = location.href;
+    var hostname = location.hostname;
     var pageTitle = document.title || '';
 
     // Meta description
     var metaDesc = (document.querySelector('meta[name="description"]') ||
-                    document.querySelector('meta[property="og:description"]'));
+      document.querySelector('meta[property="og:description"]'));
     var description = metaDesc ? (metaDesc.getAttribute('content') || '').trim() : '';
 
     // Headings (page structure)
@@ -214,10 +214,10 @@
   function getLegitimacyConfig(badge) {
     switch (badge) {
       case 'OFFICIAL_GOVT': return { icon: '🏛️', label: 'Official Government Portal', cls: 'eg-pi-legit-govt' };
-      case 'OFFICIAL_EDU':  return { icon: '🎓', label: 'Official Educational Institution', cls: 'eg-pi-legit-edu' };
+      case 'OFFICIAL_EDU': return { icon: '🎓', label: 'Official Educational Institution', cls: 'eg-pi-legit-edu' };
       case 'OFFICIAL_BANK': return { icon: '🏦', label: 'Official Banking / Financial Portal', cls: 'eg-pi-legit-bank' };
-      case 'SUSPICIOUS':    return { icon: '🚨', label: 'Suspicious — Proceed with Caution', cls: 'eg-pi-legit-suspicious' };
-      default:              return { icon: '❓', label: 'Cannot Verify Official Status', cls: 'eg-pi-legit-unverified' };
+      case 'SUSPICIOUS': return { icon: '🚨', label: 'Suspicious — Proceed with Caution', cls: 'eg-pi-legit-suspicious' };
+      default: return { icon: '❓', label: 'Cannot Verify Official Status', cls: 'eg-pi-legit-unverified' };
     }
   }
 
@@ -227,7 +227,7 @@
       items.map(function (item) {
         return '<li class="eg-pi-list-item"><span class="eg-pi-bullet">▸</span>' + escapeHtml(item) + '</li>';
       }).join('') +
-    '</ul>';
+      '</ul>';
   }
 
   function renderPanel(info) {
@@ -239,77 +239,77 @@
 
     return (
       '<div class="eg-pi-header">' +
-        '<div class="eg-pi-header-left">' +
-          '<span class="eg-pi-site-icon">' + legit.icon + '</span>' +
-          '<div class="eg-pi-header-text">' +
-            '<strong class="eg-pi-site-name">' + escapeHtml(info.siteName || document.title) + '</strong>' +
-            '<span class="eg-pi-url">' + escapeHtml(location.hostname) + '</span>' +
-          '</div>' +
-        '</div>' +
-        '<button type="button" class="eg-pi-close-btn" id="egPageInfoClose" aria-label="Close">✕</button>' +
+      '<div class="eg-pi-header-left">' +
+      '<span class="eg-pi-site-icon">' + legit.icon + '</span>' +
+      '<div class="eg-pi-header-text">' +
+      '<strong class="eg-pi-site-name">' + escapeHtml(info.siteName || document.title) + '</strong>' +
+      '<span class="eg-pi-url">' + escapeHtml(location.hostname) + '</span>' +
+      '</div>' +
+      '</div>' +
+      '<button type="button" class="eg-pi-close-btn" id="egPageInfoClose" aria-label="Close">✕</button>' +
       '</div>' +
 
       '<div class="eg-pi-body">' +
-        // Legitimacy badge
-        '<div class="eg-pi-legit-badge ' + legit.cls + '">' +
-          '<span>' + legit.icon + ' ' + escapeHtml(legit.label) + '</span>' +
-          (info.legitimacyNote ? '<p class="eg-pi-legit-note">' + escapeHtml(info.legitimacyNote) + '</p>' : '') +
-        '</div>' +
+      // Legitimacy badge
+      '<div class="eg-pi-legit-badge ' + legit.cls + '">' +
+      '<span>' + legit.icon + ' ' + escapeHtml(legit.label) + '</span>' +
+      (info.legitimacyNote ? '<p class="eg-pi-legit-note">' + escapeHtml(info.legitimacyNote) + '</p>' : '') +
+      '</div>' +
 
-        // What this page is for
-        (info.currentPagePurpose || info.siteDescription ? (
-          '<div class="eg-pi-section">' +
-            '<h4 class="eg-pi-section-title">📍 What this page is</h4>' +
-            '<p class="eg-pi-section-text">' + escapeHtml(info.currentPagePurpose || info.siteDescription) + '</p>' +
-          '</div>'
-        ) : '') +
+      // What this page is for
+      (info.currentPagePurpose || info.siteDescription ? (
+        '<div class="eg-pi-section">' +
+        '<h4 class="eg-pi-section-title">📍 What this page is</h4>' +
+        '<p class="eg-pi-section-text">' + escapeHtml(info.currentPagePurpose || info.siteDescription) + '</p>' +
+        '</div>'
+      ) : '') +
 
-        // Form purpose
-        (info.formPurpose ? (
-          '<div class="eg-pi-section">' +
-            '<h4 class="eg-pi-section-title">📋 What the form is for</h4>' +
-            '<p class="eg-pi-section-text">' + escapeHtml(info.formPurpose) + '</p>' +
-          '</div>'
-        ) : '') +
+      // Form purpose
+      (info.formPurpose ? (
+        '<div class="eg-pi-section">' +
+        '<h4 class="eg-pi-section-title">📋 What the form is for</h4>' +
+        '<p class="eg-pi-section-text">' + escapeHtml(info.formPurpose) + '</p>' +
+        '</div>'
+      ) : '') +
 
-        // Required documents
-        (hasDocs ? (
-          '<div class="eg-pi-section">' +
-            '<h4 class="eg-pi-section-title">📄 Documents you\'ll need</h4>' +
-            renderList(info.requiredDocuments) +
-          '</div>'
-        ) : '') +
+      // Required documents
+      (hasDocs ? (
+        '<div class="eg-pi-section">' +
+        '<h4 class="eg-pi-section-title">📄 Documents you\'ll need</h4>' +
+        renderList(info.requiredDocuments) +
+        '</div>'
+      ) : '') +
 
-        // Required info
-        (hasInfo ? (
-          '<div class="eg-pi-section">' +
-            '<h4 class="eg-pi-section-title">📝 Information you\'ll need</h4>' +
-            renderList(info.requiredInfo) +
-          '</div>'
-        ) : '') +
+      // Required info
+      (hasInfo ? (
+        '<div class="eg-pi-section">' +
+        '<h4 class="eg-pi-section-title">📝 Information you\'ll need</h4>' +
+        renderList(info.requiredInfo) +
+        '</div>'
+      ) : '') +
 
-        // Tips
-        (hasTips ? (
-          '<div class="eg-pi-section">' +
-            '<h4 class="eg-pi-section-title">💡 Tips</h4>' +
-            renderList(info.tips) +
-          '</div>'
-        ) : '') +
+      // Tips
+      (hasTips ? (
+        '<div class="eg-pi-section">' +
+        '<h4 class="eg-pi-section-title">💡 Tips</h4>' +
+        renderList(info.tips) +
+        '</div>'
+      ) : '') +
 
-        // Warnings
-        (hasWarnings ? (
-          '<div class="eg-pi-warnings">' +
-            '<h4 class="eg-pi-section-title eg-pi-warn-title">⚠️ Warnings</h4>' +
-            renderList(info.warnings) +
-          '</div>'
-        ) : '') +
+      // Warnings
+      (hasWarnings ? (
+        '<div class="eg-pi-warnings">' +
+        '<h4 class="eg-pi-section-title eg-pi-warn-title">⚠️ Warnings</h4>' +
+        renderList(info.warnings) +
+        '</div>'
+      ) : '') +
       '</div>' +
 
       '<div class="eg-pi-footer">' +
-        '<span class="eg-pi-confidence eg-pi-conf-' + (info.confidence || 'MEDIUM').toLowerCase() + '">' +
-          '🤖 AI confidence: ' + (info.confidence || 'MEDIUM') +
-        '</span>' +
-        '<button type="button" class="eg-pi-retry-btn" id="egPageInfoRetry">↻ Refresh</button>' +
+      '<span class="eg-pi-confidence eg-pi-conf-' + (info.confidence || 'MEDIUM').toLowerCase() + '">' +
+      ' AI confidence: ' + (info.confidence || 'MEDIUM') +
+      '</span>' +
+      '<button type="button" class="eg-pi-retry-btn" id="egPageInfoRetry">↻ Refresh</button>' +
       '</div>'
     );
   }
@@ -317,9 +317,9 @@
   function renderLoading() {
     return (
       '<div class="eg-pi-loading">' +
-        '<div class="eg-pi-spinner"></div>' +
-        '<strong class="eg-pi-loading-title">Analyzing this page…</strong>' +
-        '<p class="eg-pi-loading-sub">Gemini AI is checking what this page is and what you\'ll need.</p>' +
+      '<div class="eg-pi-spinner"></div>' +
+      '<strong class="eg-pi-loading-title">Analyzing this page…</strong>' +
+      '<p class="eg-pi-loading-sub">Gemini AI is checking what this page is and what you\'ll need.</p>' +
       '</div>'
     );
   }
@@ -327,18 +327,18 @@
   function renderError(msg) {
     return (
       '<div class="eg-pi-header">' +
-        '<span class="eg-pi-site-icon">⚠️</span>' +
-        '<div class="eg-pi-header-text">' +
-          '<strong class="eg-pi-site-name">Analysis Failed</strong>' +
-          '<span class="eg-pi-url">' + escapeHtml(location.hostname) + '</span>' +
-        '</div>' +
-        '<button type="button" class="eg-pi-close-btn" id="egPageInfoClose" aria-label="Close">✕</button>' +
+      '<span class="eg-pi-site-icon">⚠️</span>' +
+      '<div class="eg-pi-header-text">' +
+      '<strong class="eg-pi-site-name">Analysis Failed</strong>' +
+      '<span class="eg-pi-url">' + escapeHtml(location.hostname) + '</span>' +
+      '</div>' +
+      '<button type="button" class="eg-pi-close-btn" id="egPageInfoClose" aria-label="Close">✕</button>' +
       '</div>' +
       '<div class="eg-pi-body">' +
-        '<div class="eg-pi-error-box">' +
-          '<p class="eg-pi-error-msg">' + escapeHtml(msg) + '</p>' +
-          '<button type="button" class="eg-pi-retry-btn eg-pi-retry-big" id="egPageInfoRetry">↻ Try Again</button>' +
-        '</div>' +
+      '<div class="eg-pi-error-box">' +
+      '<p class="eg-pi-error-msg">' + escapeHtml(msg) + '</p>' +
+      '<button type="button" class="eg-pi-retry-btn eg-pi-retry-big" id="egPageInfoRetry">↻ Try Again</button>' +
+      '</div>' +
       '</div>'
     );
   }
@@ -348,10 +348,34 @@
   function positionPanel() {
     if (!_panelEl) return;
     var badge = document.getElementById('error-guard-badge');
-    if (!badge) return;
-    var rect = badge.getBoundingClientRect();
-    _panelEl.style.bottom = (window.innerHeight - rect.top + 10) + 'px';
-    _panelEl.style.right  = (window.innerWidth  - rect.right) + 'px';
+    var btn = document.getElementById(BTN_ID);
+    var anchor = btn || badge;
+    if (!anchor) return;
+
+    var rect = anchor.getBoundingClientRect();
+    var badgeRect = badge ? badge.getBoundingClientRect() : rect;
+
+    // Position panel directly to the left of the side-tab badge with 12px margin
+    var rightOffset = window.innerWidth - badgeRect.left + 12;
+    _panelEl.style.right = rightOffset + 'px';
+    _panelEl.style.bottom = 'auto'; // Clear bottom property
+
+    // Measure panel height
+    var panelHeight = _panelEl.offsetHeight || 520;
+    var targetTop = rect.top + (rect.height / 2) - (panelHeight / 2);
+
+    // Keep panel strictly inside visible viewport (minimum 16px from top and bottom)
+    var minTop = 16;
+    var maxTop = window.innerHeight - panelHeight - 16;
+    if (maxTop < minTop) {
+      targetTop = minTop;
+      _panelEl.style.maxHeight = (window.innerHeight - 32) + 'px';
+    } else {
+      targetTop = Math.max(minTop, Math.min(targetTop, maxTop));
+      _panelEl.style.maxHeight = 'calc(100vh - 32px)';
+    }
+
+    _panelEl.style.top = targetTop + 'px';
   }
 
   function attachPanelListeners() {
@@ -413,14 +437,16 @@
       var ctx = scrapePageContext();
       var info = await callGeminiPageInfo(ctx);
       _cache.set(location.href, { info: info, timestamp: Date.now() });
-      // Re-open with real content (panel already open)
+      // Re-open with real content and re-calculate position
       if (_panelEl) {
         _panelEl.innerHTML = renderPanel(info);
+        positionPanel();
         attachPanelListeners();
       }
     } catch (err) {
       if (_panelEl) {
         _panelEl.innerHTML = renderError(err.message || 'Could not connect to Gemini AI.');
+        positionPanel();
         attachPanelListeners();
       }
     } finally {
@@ -454,7 +480,7 @@
     btn.className = 'eg-pageinfo-btn';
     btn.setAttribute('title', 'What is this page? Am I in the right place?');
     btn.setAttribute('aria-label', 'Analyze this page');
-    btn.innerHTML = 'ℹ️';
+    btn.innerHTML = '<span class="eg-tab-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></span><span class="eg-tab-label">Info</span>';
 
     btn.addEventListener('click', function (e) {
       e.stopPropagation();
@@ -465,7 +491,7 @@
     var badgeContent = badge.querySelector('.eg-badge-content');
     if (badgeContent) {
       var translateBtn = badge.querySelector('#eg-translate-btn');
-      var refreshBtn   = badge.querySelector('#egBadgeRefresh');
+      var refreshBtn = badge.querySelector('#egBadgeRefresh');
       var anchor = translateBtn || refreshBtn;
       if (anchor) badgeContent.insertBefore(btn, anchor);
       else badgeContent.appendChild(btn);

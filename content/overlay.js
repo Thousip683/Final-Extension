@@ -49,9 +49,23 @@
       this.badgeEl.className = 'eg-floating-badge eg-idle';
       this.badgeEl.innerHTML = `
         <div class="eg-badge-content">
-          <span class="eg-badge-icon">🛡️</span>
-          <button type="button" class="eg-badge-check-btn" id="egBadgeCheckBtn" title="Inspect Form for Pre-Submission Errors">
-            🔍 Check for Errors
+          <div class="eg-badge-brand">
+            <span class="eg-tab-icon">
+              <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            </span>
+            <span class="eg-tab-label">Guard</span>
+          </div>
+          <button
+            type="button"
+            class="eg-badge-check-btn"
+            id="egBadgeCheckBtn"
+            data-tooltip="Check for Errors"
+            title="Inspect Form for Pre-Submission Errors"
+          >
+            <span class="eg-tab-icon">
+              <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            </span>
+            <span class="eg-tab-label">Check</span>
           </button>
         </div>
       `;
@@ -88,13 +102,24 @@
       const handleRefreshClick = async (e) => {
         e.stopPropagation();
         const btn = e.currentTarget;
-        btn.classList.add('eg-spinning');
-        if (window.ErrorGuard && window.ErrorGuard.reEvaluate) {
-          await window.ErrorGuard.reEvaluate({ showAlerts: this.hasForm ? this.userHasCheckedErrors : false });
+        const icon = btn.querySelector('.eg-refresh-icon');
+        if (icon) {
+          icon.classList.add('eg-spinning');
+        } else {
+          btn.classList.add('eg-spinning');
         }
-        setTimeout(() => {
-          btn.classList.remove('eg-spinning');
-        }, 400);
+        btn.style.pointerEvents = 'none';
+        try {
+          if (window.ErrorGuard && window.ErrorGuard.reEvaluate) {
+            await window.ErrorGuard.reEvaluate({ showAlerts: this.hasForm ? this.userHasCheckedErrors : false });
+          }
+        } finally {
+          setTimeout(() => {
+            if (icon) icon.classList.remove('eg-spinning');
+            btn.classList.remove('eg-spinning');
+            btn.style.pointerEvents = '';
+          }, 450);
+        }
       };
 
 
@@ -106,10 +131,16 @@
         <div class="eg-drawer-header">
           <div class="eg-drawer-title">
             <span>🛡️ Pre-Submission Error Guard</span>
-            <span class="eg-health-tag" id="egDrawerScore">Health: --%</span>
           </div>
           <div class="eg-drawer-header-actions">
-            <button type="button" class="eg-drawer-refresh-btn" id="egDrawerRefresh" title="Re-scan Form">🔄 Refresh</button>
+            <button type="button" class="eg-drawer-refresh-btn" id="egDrawerRefresh" title="Re-scan Form">
+              <span class="eg-refresh-icon">
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+                </svg>
+              </span>
+              <span class="eg-refresh-text">Refresh</span>
+            </button>
             <button type="button" class="eg-drawer-close" id="egDrawerClose">✕</button>
           </div>
         </div>
@@ -500,7 +531,11 @@
       if (!report || report.hasForm === false) {
         this.hasForm = false;
         this.clearFieldHighlights();
-        if (checkBtn) checkBtn.style.display = 'none';
+        if (checkBtn) {
+          checkBtn.style.display = '';
+          checkBtn.style.opacity = '0.6';
+          checkBtn.title = 'No active application form detected on this page';
+        }
         this.badgeEl.className = 'eg-floating-badge eg-standby';
         this.badgeEl.title = 'Error Guard is in Standby Mode (No application form detected on this page). Click for details.';
         if (badgeStatus) {
@@ -516,6 +551,11 @@
       }
 
       this.hasForm = true;
+      if (checkBtn) {
+        checkBtn.style.display = '';
+        checkBtn.style.opacity = '';
+        checkBtn.title = 'Inspect Form for Pre-Submission Errors';
+      }
       this.hideStandbyPopover();
       this.badgeEl.title = '';
 
@@ -529,7 +569,6 @@
 
 
       if (this.isAiProcessing) {
-        if (checkBtn) checkBtn.style.display = 'none';
         this.badgeEl.className = 'eg-floating-badge eg-ai-analyzing';
         if (badgeStatus) {
           badgeStatus.innerHTML = `<span class="eg-ai-pulse">🔒</span> Reading on device... ${this.aiProgressPercent || 0}%`;
@@ -543,61 +582,60 @@
         return;
       }
 
-      if (!showAlerts) {
-        // Calm, non-intrusive idle state: No red boxes on blank fields!
-        this.clearFieldHighlights();
-        if (checkBtn) checkBtn.style.display = 'inline-flex';
+      // if (!showAlerts) {
+      //   // Calm, non-intrusive idle state: No red boxes on blank fields!
+      //   this.clearFieldHighlights();
 
-        if (this.aiDocumentReady) {
-          this.badgeEl.className = 'eg-floating-badge eg-ai-ready';
-          if (badgeStatus) badgeStatus.innerHTML = this.aiAutoFillMode
-            ? `✓ Document read • Click Auto-Fill`
-            : `✓ Document read • Click Check`;
-        } else {
-          this.badgeEl.className = 'eg-floating-badge eg-idle';
-          if (badgeStatus) badgeStatus.textContent = this.aiAutoFillMode
-            ? '🪄 Auto-Fill • Active'
-            : '📋 Manual Guard • Click to Check';
-        }
+      //   if (this.aiDocumentReady) {
+      //     this.badgeEl.className = 'eg-floating-badge eg-ai-ready';
+      //     if (badgeStatus) badgeStatus.innerHTML = this.aiAutoFillMode
+      //       ? `✓ Document read • Click Auto-Fill`
+      //       : `✓ Document read • Click Check`;
+      //   } else {
+      //     this.badgeEl.className = 'eg-floating-badge eg-idle';
+      //     if (badgeStatus) badgeStatus.textContent = this.aiAutoFillMode
+      //       ? '🪄 Auto-Fill • Active'
+      //       : '📋 Manual Guard • Click to Check';
+      //   }
 
-        if (drawerScore) {
-          drawerScore.textContent = `Health: Ready to Audit`;
-          drawerScore.className = 'eg-health-tag';
-        }
-      } else {
-        // User clicked check button or submitted form -> show full audit results
-        if (checkBtn) checkBtn.style.display = 'none';
+      //   if (drawerScore) {
+      //     drawerScore.textContent = `Health: Ready to Audit`;
+      //     drawerScore.className = 'eg-health-tag';
+      //   }
+      // } else {
+      //   // User clicked check button or submitted form -> show full audit results
+      //   // Keep checkBtn permanently visible in side-tab for re-checks
 
-        const allFieldIssues = [
-          ...(report.issues?.blocking || []),
-          ...(report.issues?.warnings || [])
-        ];
+      //   const allFieldIssues = [
+      //     ...(report.issues?.blocking || []),
+      //     ...(report.issues?.warnings || [])
+      //   ];
 
-        if (report.isReady) {
-          this.badgeEl.className = 'eg-floating-badge eg-ready';
-          if (badgeStatus) badgeStatus.textContent = 'READY TO SUBMIT';
-          if (drawerScore) {
-            drawerScore.textContent = `Health: ${report.healthScore}% (Ready)`;
-            drawerScore.className = 'eg-health-tag eg-tag-ready';
-          }
-        } else {
-          const blockingCount = report.issues.blocking.length;
-          this.badgeEl.className = 'eg-floating-badge eg-not-ready';
-          if (badgeStatus) badgeStatus.textContent = `${blockingCount} Issue${blockingCount > 1 ? 's' : ''} (Action Required)`;
-          if (drawerScore) {
-            drawerScore.textContent = `Health: ${report.healthScore}% (Action Required)`;
-            drawerScore.className = 'eg-health-tag eg-tag-error';
-          }
-        }
+      //   // if (report.isReady) {
+      //   //   this.badgeEl.className = 'eg-floating-badge eg-ready';
+      //   //   if (badgeStatus) badgeStatus.textContent = 'READY TO SUBMIT';
+      //   //   if (drawerScore) {
+      //   //     drawerScore.textContent = `Health: ${report.healthScore}% (Ready)`;
+      //   //     drawerScore.className = 'eg-health-tag eg-tag-ready';
+      //   //   }
+      //   // } else {
+      //   //   const blockingCount = report.issues.blocking.length;
+      //   //   this.badgeEl.className = 'eg-floating-badge eg-not-ready';
+      //   //   if (badgeStatus) badgeStatus.textContent = `${blockingCount} Issue${blockingCount > 1 ? 's' : ''} (Action Required)`;
+      //   //   if (drawerScore) {
+      //   //     drawerScore.textContent = `Health: ${report.healthScore}% (Action Required)`;
+      //   //     drawerScore.className = 'eg-health-tag eg-tag-error';
+      //   //   }
+      //   // }
 
-        // Inline messages directly under the offending inputs
-        if (highlightFields) {
-          this.syncFieldHighlights(allFieldIssues);
-        } else {
-          this.clearFieldHighlights();
-        }
+      //   // Inline messages directly under the offending inputs
+      //   if (highlightFields) {
+      //     this.syncFieldHighlights(allFieldIssues);
+      //   } else {
+      //     this.clearFieldHighlights();
+      //   }
 
-      }
+      // }
 
       this.renderDrawerContent(report, showAlerts);
 
@@ -724,6 +762,181 @@
       this.hideBlurRejectedBanner();
     }
 
+    // ─── Field Completion Circular Component Helpers ───
+    isFieldFilled(el) {
+      if (!el) return false;
+      const tagName = el.tagName ? el.tagName.toLowerCase() : '';
+      const type = (el.type || '').toLowerCase();
+
+      if (type === 'checkbox') {
+        return el.checked;
+      }
+      if (type === 'radio') {
+        if (el.checked) return true;
+        if (el.name) {
+          try {
+            const checked = document.querySelector(`input[type="radio"][name="${CSS.escape(el.name)}"]:checked`);
+            if (checked) return true;
+          } catch (e) {
+            return el.checked;
+          }
+        }
+        return false;
+      }
+      if (type === 'file') {
+        return !!(el.files && el.files.length > 0);
+      }
+      if (tagName === 'select') {
+        if (!el.value || el.value === '' || el.selectedIndex < 0) return false;
+        const opt = el.options && el.options[el.selectedIndex];
+        const text = opt ? opt.text.trim().toLowerCase() : '';
+        if (text.includes('select') || text.includes('choose') || text.startsWith('--')) {
+          return false;
+        }
+        return true;
+      }
+      return typeof el.value === 'string' && el.value.trim().length > 0;
+    }
+
+    getFieldCompletionStats(report) {
+      const fields = this.getVisibleFormFields();
+      const total = fields.length;
+      if (total === 0) {
+        return { completed: 0, total: 0, percent: 0, remaining: 0, nextIncompleteIndex: -1, nextIncompleteLabel: '' };
+      }
+
+      const blockingIssues = (report && report.issues && report.issues.blocking) ? report.issues.blocking : [];
+      const blockingElementIds = new Set();
+      const blockingFieldNames = new Set();
+      const blockingElements = new Set();
+
+      for (const issue of blockingIssues) {
+        if (issue.element) blockingElements.add(issue.element);
+        if (issue.elementId) blockingElementIds.add(issue.elementId);
+        if (issue.field) blockingFieldNames.add(issue.field);
+      }
+
+      let completed = 0;
+      let nextIncompleteIndex = -1;
+
+      for (let i = 0; i < fields.length; i++) {
+        const el = fields[i];
+        const hasBlockingError = blockingElements.has(el) ||
+          (el.id && blockingElementIds.has(el.id)) ||
+          (el.name && blockingFieldNames.has(el.name));
+
+        const isFilled = this.isFieldFilled(el);
+
+        if (isFilled && !hasBlockingError) {
+          completed++;
+        } else if (nextIncompleteIndex === -1) {
+          nextIncompleteIndex = i;
+        }
+      }
+
+      const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
+      const remaining = Math.max(0, total - completed);
+      let nextIncompleteLabel = '';
+      if (nextIncompleteIndex >= 0 && nextIncompleteIndex < fields.length) {
+        nextIncompleteLabel = this.getFieldLabel(fields[nextIncompleteIndex]) || '';
+      }
+
+      return { completed, total, percent, remaining, nextIncompleteIndex, nextIncompleteLabel };
+    }
+
+    renderFieldProgressComponent(report) {
+      const stats = this.getFieldCompletionStats(report);
+      const { completed, total, percent, remaining, nextIncompleteIndex, nextIncompleteLabel } = stats;
+
+      if (total === 0) return '';
+
+      const r = 31;
+      const circumference = +(2 * Math.PI * r).toFixed(2);
+      const offset = +(circumference - (circumference * (percent / 100))).toFixed(2);
+
+      let colorClass = 'eg-circle-bar-danger';
+      let badgeClass = 'eg-badge-danger';
+      if (completed === total && total > 0) {
+        colorClass = 'eg-circle-bar-success';
+        badgeClass = 'eg-badge-success';
+      } else if (percent >= 70) {
+        colorClass = 'eg-circle-bar-info';
+        badgeClass = 'eg-badge-info';
+      } else if (percent >= 40) {
+        colorClass = 'eg-circle-bar-warning';
+        badgeClass = 'eg-badge-warning';
+      }
+
+      const isAllDone = completed === total && total > 0;
+      const labelSnippet = nextIncompleteLabel
+        ? (nextIncompleteLabel.length > 20 ? nextIncompleteLabel.slice(0, 18) + '…' : nextIncompleteLabel)
+        : '';
+
+      return `
+        <div class="eg-field-progress-card" id="egFieldProgressCard" role="region" aria-label="Field Completion Progress">
+          <div class="eg-progress-circle-wrap">
+            <svg class="eg-progress-circle-svg" viewBox="0 0 76 76" width="76" height="76" aria-hidden="true">
+              <circle class="eg-circle-bg" cx="38" cy="38" r="${r}" />
+              <circle class="eg-circle-bar ${colorClass}" cx="38" cy="38" r="${r}"
+                stroke-dasharray="${circumference}"
+                stroke-dashoffset="${offset}" />
+            </svg>
+            <div class="eg-circle-inner-content">
+              <div class="eg-circle-fraction">
+                <span class="eg-circle-num">${completed}</span>
+                <span class="eg-circle-slash">/</span>
+                <span class="eg-circle-total">${total}</span>
+              </div>
+              <span class="eg-circle-sublabel">FIELDS</span>
+            </div>
+          </div>
+          <div class="eg-progress-details">
+            <div class="eg-progress-top-row">
+              <span class="eg-progress-card-title">Fields Completed</span>
+              <span class="eg-progress-percent-badge ${badgeClass}">${percent}%</span>
+            </div>
+            <div class="eg-progress-main-count">
+              ${isAllDone
+          ? '<strong>All fields completed!</strong>'
+          : `<strong>${completed} of ${total}</strong> completed`
+        }
+            </div>
+            <div class="eg-progress-remaining-text">
+              ${isAllDone
+          ? 'All detected input fields have valid values.'
+          : `${remaining} field${remaining === 1 ? '' : 's'} remaining before submission.`
+        }
+            </div>
+            ${!isAllDone && nextIncompleteIndex >= 0 ? `
+              <button type="button" class="eg-progress-jump-btn" id="egProgressJumpBtn" data-index="${nextIncompleteIndex}" title="Focus ${nextIncompleteLabel || 'next incomplete field'}">
+                <span>Jump to next: <strong>${labelSnippet || 'Missing field'}</strong></span>
+                <span aria-hidden="true">→</span>
+              </button>
+            ` : (isAllDone ? `
+              <div class="eg-progress-all-done-tag">
+                <span>✓ Ready for submission</span>
+              </div>
+            ` : '')}
+          </div>
+        </div>
+      `;
+    }
+
+    attachFieldProgressListeners(container) {
+      if (!container) return;
+      const jumpBtn = container.querySelector('#egProgressJumpBtn');
+      if (jumpBtn) {
+        jumpBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const targetIdx = parseInt(jumpBtn.getAttribute('data-index'), 10);
+          if (!isNaN(targetIdx) && targetIdx >= 0) {
+            this.navigateToField(targetIdx);
+          }
+        });
+      }
+    }
+
     renderDrawerContent(report, showAlerts = true) {
       const body = document.getElementById('egDrawerBody');
       if (!body) return;
@@ -789,6 +1002,7 @@
             <h4>🛡️ Pre-Submission Audit Ready</h4>
             <p>Error Guard is actively scanning your form and reading your document on this device. Alerts are paused until you request a check.</p>
           </div>
+          ${this.renderFieldProgressComponent(report)}
           <div style="text-align: center; margin: 20px 0;">
             <button type="button" class="eg-btn eg-btn-primary" id="egDrawerAuditBtn" style="padding: 12px 20px; font-size: 0.95rem; border-radius: 8px; cursor: pointer; width: 100%; font-weight: 700;">
               🔍 Check for Errors Now
@@ -817,6 +1031,7 @@
             }
           });
         }
+        this.attachFieldProgressListeners(body);
         return;
       }
 
@@ -829,31 +1044,15 @@
           </p>
         </div>
 
+        ${this.renderFieldProgressComponent(report)}
+
         <div style="margin-bottom: 16px; display: flex; justify-content: flex-end;">
           <button type="button" class="eg-badge-dismiss-btn" id="egDrawerDismissAlertsBtn" style="padding: 6px 12px; font-size: 0.75rem; border-radius: 6px; cursor: pointer; background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1;">
             ✕ Hide Alerts & Resume Typing
           </button>
         </div>
 
-        <div class="eg-section-checklist">
-          <h5>Pre-Submission Verification Checklist</h5>
-          <div class="eg-check-grid">
-            <div class="eg-check-item ${report.checklist.form.valid ? 'pass' : 'fail'}">
-              <span>${report.checklist.form.valid ? '✅' : '❌'}</span>
-              <span>Form Fields Completed</span>
-            </div>
-            ${report.checklist.document?.hasFileInput ? `
-            <div class="eg-check-item ${report.checklist.document.uploaded ? (report.checklist.document.sizeValid && report.checklist.document.formatValid ? 'pass' : 'fail') : (report.checklist.document.required ? 'fail' : 'pending')}">
-              <span>${report.checklist.document.uploaded ? (report.checklist.document.sizeValid && report.checklist.document.formatValid ? '✅' : '❌') : (report.checklist.document.required ? '❌' : '⏳')}</span>
-              <span>${report.checklist.document.uploaded ? 'Document Size & Format' : (report.checklist.document.required ? 'Document Required' : 'Document Optional')}</span>
-            </div>
-            <div class="eg-check-item ${(report.checklist.verification.nameMatch === true || report.checklist.verification.dobMatch === true) ? 'pass' : (report.checklist.verification.nameMatch === false || report.checklist.verification.dobMatch === false ? 'fail' : 'pending')}">
-              <span>${(report.checklist.verification.nameMatch === true || report.checklist.verification.dobMatch === true) ? '✅' : (report.checklist.verification.nameMatch === false || report.checklist.verification.dobMatch === false ? '❌' : '⏳')}</span>
-              <span>Name & DOB Cross-Check</span>
-            </div>
-            ` : ''}
-          </div>
-        </div>
+       
       `;
 
       if (report.issues.all.length > 0) {
@@ -929,6 +1128,8 @@
           }
         });
       });
+
+      this.attachFieldProgressListeners(body);
     }
 
     showPreSubmitModal(report) {
@@ -984,12 +1185,20 @@
         this.drawerEl.classList.add('eg-drawer-open');
         this.updateFieldNavigator();
       }
+      // Hide the side-tab while drawer is open
+      if (this.badgeEl) {
+        this.badgeEl.classList.add('eg-badge-hidden');
+      }
     }
 
     closeDrawer() {
       if (this.drawerEl) {
         this.drawerEl.classList.remove('eg-drawer-open');
         this.drawerEl.classList.add('eg-drawer-closed');
+      }
+      // Restore the side-tab
+      if (this.badgeEl) {
+        this.badgeEl.classList.remove('eg-badge-hidden');
       }
     }
 
@@ -1202,17 +1411,17 @@
 
       // Human-readable labels and icons for each field key
       const FIELD_META = {
-        fullName:      { label: 'Name',         icon: '👤' },
-        fatherName:    { label: 'Father Name',   icon: '👨' },
-        motherName:    { label: 'Mother Name',   icon: '👩' },
-        dob:           { label: 'Date of Birth', icon: '📅' },
-        gender:        { label: 'Gender',        icon: '⚧' },
-        aadhaarNumber: { label: 'Aadhaar No.',   icon: '🆔' },
-        panNumber:     { label: 'PAN',           icon: '💳' },
+        fullName: { label: 'Name', icon: '👤' },
+        fatherName: { label: 'Father Name', icon: '👨' },
+        motherName: { label: 'Mother Name', icon: '👩' },
+        dob: { label: 'Date of Birth', icon: '📅' },
+        gender: { label: 'Gender', icon: '⚧' },
+        aadhaarNumber: { label: 'Aadhaar No.', icon: '🆔' },
+        panNumber: { label: 'PAN', icon: '💳' },
         certificateNo: { label: 'Certificate No.', icon: '📜' },
-        phone:         { label: 'Mobile',        icon: '📞' },
-        email:         { label: 'Email',         icon: '📧' },
-        category:      { label: 'Category',      icon: '🏷️' }
+        phone: { label: 'Mobile', icon: '📞' },
+        email: { label: 'Email', icon: '📧' },
+        category: { label: 'Category', icon: '🏷️' }
       };
 
       // Fields to skip in the preview (optional/sensitive/not from doc)
@@ -1247,8 +1456,8 @@
         }
       } else {
         // Legacy fallback: only show name / dob / id
-        if (docData.name)          tagsHtml += `<span class="eg-autofill-tag">👤 Name: <strong>${docData.name}</strong></span>`;
-        if (docData.dob)           tagsHtml += `<span class="eg-autofill-tag">📅 DOB: <strong>${docData.dob}</strong></span>`;
+        if (docData.name) tagsHtml += `<span class="eg-autofill-tag">👤 Name: <strong>${docData.name}</strong></span>`;
+        if (docData.dob) tagsHtml += `<span class="eg-autofill-tag">📅 DOB: <strong>${docData.dob}</strong></span>`;
         if (docData.certificateNo) tagsHtml += `<span class="eg-autofill-tag">🆔 ID: <strong>${docData.certificateNo}</strong></span>`;
       }
 

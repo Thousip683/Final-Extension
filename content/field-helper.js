@@ -173,6 +173,9 @@
    */
   async function callPrefetchAllFields(pageContext) {
     var apiKey = await getApiKey();
+    if (!apiKey) {
+      throw new Error('No Gemini API Key found. Please save your API Key in the extension popup settings.');
+    }
     var { pageTitle, hostname, headings, fieldDescriptors } = pageContext;
 
     // Build a compact field list for the prompt
@@ -275,6 +278,9 @@
    */
   async function callExplainField(fieldLabel, fieldContext) {
     var apiKey = await getApiKey();
+    if (!apiKey) {
+      throw new Error('No Gemini API Key found. Please save your API Key in the extension popup settings.');
+    }
     var pageTitle = document.title || 'Government / Scholarship Application Form';
     var activeLangName = getActiveLangName();
     var isEnglish = (getActiveLang() === 'en');
@@ -465,7 +471,17 @@
       '<div class="eg-help-dots"><span></span><span></span><span></span></div>' +
       '<p class="eg-help-label">Asking Gemini AI&hellip;</p>' +
       '</div>' +
+      '<button type="button" class="eg-help-dismiss" title="Dismiss" aria-label="Close">&#10005;</button>' +
       '</div>';
+    var dismissBtn = tooltip.querySelector('.eg-help-dismiss');
+    if (dismissBtn) {
+      dismissBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        tooltip.remove();
+        var btn = document.getElementById(BTN_ID);
+        if (btn) btn.classList.remove('eg-help-btn-active');
+      });
+    }
   }
 
   function showResult(tooltip, explanation) {
@@ -479,10 +495,15 @@
       '</div>' +
       '<button type="button" class="eg-help-dismiss" title="Dismiss" aria-label="Close">&#10005;</button>' +
       '</div>';
-    tooltip.querySelector('.eg-help-dismiss').addEventListener('click', function (e) {
-      e.stopPropagation();
-      tooltip.remove();
-    });
+    var dismissBtn = tooltip.querySelector('.eg-help-dismiss');
+    if (dismissBtn) {
+      dismissBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        tooltip.remove();
+        var btn = document.getElementById(BTN_ID);
+        if (btn) btn.classList.remove('eg-help-btn-active');
+      });
+    }
   }
 
   function showError(tooltip, message) {
@@ -495,10 +516,15 @@
       '</div>' +
       '<button type="button" class="eg-help-dismiss" aria-label="Close">&#10005;</button>' +
       '</div>';
-    tooltip.querySelector('.eg-help-dismiss').addEventListener('click', function (e) {
-      e.stopPropagation();
-      tooltip.remove();
-    });
+    var dismissBtn = tooltip.querySelector('.eg-help-dismiss');
+    if (dismissBtn) {
+      dismissBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        tooltip.remove();
+        var btn = document.getElementById(BTN_ID);
+        if (btn) btn.classList.remove('eg-help-btn-active');
+      });
+    }
   }
 
   // ─── Help Click Handler ────────────────────────────────────────────────────
@@ -519,16 +545,24 @@
     var pair = getOrCreateTooltip(fieldEl, key);
     var tooltip = pair.el;
 
-    // ── Path A: Cache hit (prefetch already done) — instant display ──
+    // Immediately show loading state for clear visual feedback
+    showLoading(tooltip);
+
+    var MIN_LOADING_TIME = 950; // ~1 second for smooth user experience
+
+    // ── Path A: Cache hit (prefetch already done) — display loading for ~1s for UX ──
     var cached = _cache.get(key);
     if (cached && (Date.now() - cached.timestamp < 10 * 60 * 1000)) {
-      showResult(tooltip, cached.explanation);
+      await new Promise(function (resolve) { setTimeout(resolve, MIN_LOADING_TIME); });
+      if (document.body.contains(tooltip)) {
+        showResult(tooltip, cached.explanation);
+      }
       return;
     }
 
     // ── Path B: Prefetch still in-flight — wait briefly then check cache ──
     if (_prefetchPending) {
-      showLoading(tooltip);
+      var prefetchStart = Date.now();
       var waited = 0;
       await new Promise(function (resolve) {
         var poll = setInterval(function () {
@@ -543,25 +577,35 @@
       // Re-check after waiting
       cached = _cache.get(key);
       if (cached && (Date.now() - cached.timestamp < 10 * 60 * 1000)) {
-        showResult(tooltip, cached.explanation);
+        var elapsed = Date.now() - prefetchStart;
+        if (elapsed < MIN_LOADING_TIME) {
+          await new Promise(function (resolve) { setTimeout(resolve, MIN_LOADING_TIME - elapsed); });
+        }
+        if (document.body.contains(tooltip)) {
+          showResult(tooltip, cached.explanation);
+        }
         return;
       }
     }
 
     // ── Path C: Prefetch failed / field not included — per-field fallback ──
-    // (shows loading spinner since we're about to make a network call)
-    if (!tooltip.classList.contains('eg-help-loading')) {
-      showLoading(tooltip);
-    }
-
     try {
+      var callStart = Date.now();
       var label = getFieldLabel(fieldEl);
       var context = buildFieldContext(fieldEl);
       var explanation = await callExplainField(label, context);
       _cache.set(key, { explanation: explanation, timestamp: Date.now(), source: 'fallback' });
-      showResult(tooltip, explanation);
+      var elapsed = Date.now() - callStart;
+      if (elapsed < MIN_LOADING_TIME) {
+        await new Promise(function (resolve) { setTimeout(resolve, MIN_LOADING_TIME - elapsed); });
+      }
+      if (document.body.contains(tooltip)) {
+        showResult(tooltip, explanation);
+      }
     } catch (err) {
-      showError(tooltip, err.message || 'AI explanation failed. Please try again.');
+      if (document.body.contains(tooltip)) {
+        showError(tooltip, err.message || 'AI explanation failed. Please try again.');
+      }
       btn.classList.remove('eg-help-btn-active');
     }
   }

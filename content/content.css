@@ -1,42 +1,138 @@
 /* Pre-Submission Error Guard - In-Page Overlay Styles */
 
-/* Floating Guard Badge */
+/* ═══════════════════════════════════════════════════════════
+   Side-Tab Guard Badge — premium right-edge attachment
+   ═══════════════════════════════════════════════════════════ */
 .eg-floating-badge {
   position: fixed;
-  bottom: 24px;
-  right: 24px;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
   z-index: 999999;
-  background: #0f172a;
+  background: linear-gradient(175deg, #0d1424 0%, #111827 60%, #0a1628 100%);
   color: white;
-  padding: 10px 16px;
-  border-radius: 50px;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.2);
+  padding: 12px 0 14px;
+  border-radius: 18px 0 0 18px;
+  box-shadow:
+    -6px 0 32px rgba(0, 0, 0, 0.5),
+    -1px 0 0 rgba(255, 255, 255, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
   display: flex;
   align-items: center;
-  /* pointer-events:none on the wrapper so the badge never blocks page scrolling.
-     Only the inner .eg-badge-content re-enables interaction. */
   pointer-events: none;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  border: 2px solid transparent;
+  transition:
+    transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 0.3s ease,
+    background 0.3s ease,
+    border-color 0.3s ease,
+    opacity 0.3s ease;
+  border: 1.5px solid rgba(255, 255, 255, 0.1);
+  border-right: none;
+  border-left: 3px solid #3b82f6;
+  width: 68px;
 }
 
+/* Slide hover nudge */
 .eg-floating-badge:hover {
-  transform: translateY(-3px) scale(1.02);
+  transform: translateY(-50%) translateX(-5px);
+  box-shadow:
+    -10px 0 40px rgba(0, 0, 0, 0.6),
+    -1px 0 0 rgba(255, 255, 255, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
+/* Hide when drawer is open */
+.eg-floating-badge.eg-badge-hidden {
+  opacity: 0;
+  pointer-events: none !important;
+  transform: translateY(-50%) translateX(80px);
+}
+
+/* Inner content: vertical flex column */
 .eg-badge-content {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 10px;
-  /* Re-enable pointer events on the actual interactive content */
+  gap: 2px;
   pointer-events: auto;
-  cursor: pointer;
+  width: 100%;
+  padding: 0 6px;
 }
 
+/* ── Brand header (non-clickable) ── */
+.eg-badge-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 4px 4px 8px;
+  width: 100%;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: 4px;
+}
 
-.eg-badge-icon {
-  font-size: 1.4rem;
+/* ── SVG icon wrapper ── */
+.eg-tab-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+}
+
+.eg-tab-icon svg {
+  width: 18px;
+  height: 18px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* ── Small label under icon ── */
+.eg-tab-label {
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.5);
+  line-height: 1;
+  user-select: none;
+  transition: color 0.18s ease;
+}
+
+/* ── Side-tab button base ── */
+.eg-tab-btn {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.65);
+  width: 100%;
+  padding: 7px 4px 6px;
+  border-radius: 10px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  transition: background 0.2s ease, color 0.2s ease, transform 0.18s ease;
+  flex-shrink: 0;
+  font-family: inherit;
+}
+
+.eg-tab-btn:hover {
+  background: rgba(255, 255, 255, 0.09);
+  color: #ffffff;
+}
+
+.eg-tab-btn:hover .eg-tab-label {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.eg-tab-btn:active {
+  transform: scale(0.93);
 }
 
 /* eg-badge-text, eg-badge-title, eg-badge-status removed — badge no longer shows status text */
@@ -55,11 +151,10 @@
   }
 }
 
-/* Badge States */
+/* ── Badge States — coloured left-accent border changes per state ── */
 .eg-floating-badge.eg-idle {
-  background: #0f172a;
-  border-color: #3b82f6;
-  color: #f8fafc;
+  background: linear-gradient(175deg, #0d1424 0%, #111827 100%);
+  border-left-color: #3b82f6;
 }
 
 .eg-floating-badge.eg-idle .eg-badge-status {
@@ -67,10 +162,9 @@
 }
 
 .eg-floating-badge.eg-ai-analyzing {
-  background: #1e1b4b;
-  border-color: #818cf8;
-  color: #e0e7ff;
-  box-shadow: 0 0 20px rgba(129, 140, 248, 0.4);
+  background: linear-gradient(175deg, #1a1040 0%, #1e1b4b 100%);
+  border-left-color: #818cf8;
+  box-shadow: -6px 0 32px rgba(129, 140, 248, 0.25), -1px 0 0 rgba(255, 255, 255, 0.06);
 }
 
 .eg-floating-badge.eg-ai-analyzing .eg-badge-status {
@@ -78,9 +172,8 @@
 }
 
 .eg-floating-badge.eg-ai-ready {
-  background: #0f172a;
-  border-color: #10b981;
-  color: #f8fafc;
+  background: linear-gradient(175deg, #0d1424 0%, #111827 100%);
+  border-left-color: #10b981;
 }
 
 .eg-floating-badge.eg-ai-ready .eg-badge-status {
@@ -88,9 +181,8 @@
 }
 
 .eg-floating-badge.eg-ready {
-  background: #064e3b;
-  border-color: #34d399;
-  color: #ecfdf5;
+  background: linear-gradient(175deg, #022c22 0%, #064e3b 100%);
+  border-left-color: #34d399;
 }
 
 .eg-floating-badge.eg-ready .eg-badge-status {
@@ -98,9 +190,8 @@
 }
 
 .eg-floating-badge.eg-not-ready {
-  background: #7f1d1d;
-  border-color: #f87171;
-  color: #fef2f2;
+  background: linear-gradient(175deg, #3f0808 0%, #7f1d1d 100%);
+  border-left-color: #f87171;
 }
 
 .eg-floating-badge.eg-not-ready .eg-badge-status {
@@ -108,57 +199,40 @@
 }
 
 .eg-floating-badge.eg-checking {
-  background: #1e293b;
-  border-color: #60a5fa;
-  color: #f8fafc;
+  background: linear-gradient(175deg, #0d1424 0%, #1e293b 100%);
+  border-left-color: #60a5fa;
 }
 
-/* Check for Errors Primary Button inside Badge */
+/* ── Check for Errors — primary action button in tab ── */
 .eg-badge-check-btn {
-  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-  color: #ffffff !important;
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  font-size: 0.8rem;
-  font-weight: 700;
-  padding: 6px 14px;
-  border-radius: 30px;
+  background: rgba(37, 99, 235, 0.15);
+  color: #93c5fd !important;
+  border: 1px solid rgba(37, 99, 235, 0.3);
+  width: 100%;
+  padding: 7px 4px 6px;
+  border-radius: 10px;
   cursor: pointer;
-  display: inline-flex;
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 6px;
-  box-shadow: 0 2px 10px rgba(37, 99, 235, 0.4);
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  margin-left: 8px;
-  letter-spacing: 0.01em;
+  gap: 4px;
+  transition: background 0.2s ease, color 0.2s ease, transform 0.18s ease, box-shadow 0.2s ease;
   font-family: inherit;
+  flex-shrink: 0;
 }
 
 .eg-badge-check-btn:hover {
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-  transform: translateY(-1px) scale(1.03);
-  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.6);
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.5) 0%, rgba(29, 78, 216, 0.5) 100%);
+  color: #ffffff !important;
+  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.4);
+}
+
+.eg-badge-check-btn:hover .eg-tab-label {
+  color: rgba(255, 255, 255, 0.9) !important;
 }
 
 .eg-badge-check-btn:active {
-  transform: scale(0.97);
-}
-
-.eg-badge-dismiss-btn {
-  background: rgba(255, 255, 255, 0.1);
-  color: #cbd5e1;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  font-size: 0.75rem;
-  font-weight: 600;
-  padding: 4px 10px;
-  border-radius: 20px;
-  cursor: pointer;
-  margin-left: 6px;
-  transition: all 0.2s ease;
-}
-
-.eg-badge-dismiss-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
-  color: #ffffff;
+  transform: scale(0.93);
 }
 
 .eg-ai-pulse {
@@ -239,8 +313,8 @@
 
 .eg-drawer-title {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  align-items: center;
+  gap: 8px;
   font-weight: 700;
   font-size: 0.95rem;
 }
@@ -273,15 +347,47 @@
   padding: 5px 10px;
   border-radius: 6px;
   cursor: pointer;
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 4px;
-  transition: all 0.2s ease;
+  gap: 5px;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+  animation: none !important;
+  transform: none !important;
 }
 
 .eg-drawer-refresh-btn:hover {
   background: rgba(255, 255, 255, 0.2);
   color: #ffffff;
+}
+
+/* Ensure the button itself NEVER spins when eg-spinning is added */
+.eg-drawer-refresh-btn.eg-spinning {
+  animation: none !important;
+  transform: none !important;
+}
+
+/* The isolated icon inside the refresh button that rotates cleanly */
+.eg-refresh-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transform-origin: center center;
+  line-height: 1;
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+.eg-refresh-icon svg {
+  width: 13px;
+  height: 13px;
+  display: block;
+}
+
+/* Rotate ONLY the icon, never the overall button */
+.eg-drawer-refresh-btn.eg-spinning .eg-refresh-icon,
+.eg-refresh-icon.eg-spinning {
+  animation: eg-spin 0.65s linear infinite !important;
 }
 
 .eg-drawer-close {
@@ -446,6 +552,236 @@
 .eg-status-banner p {
   font-size: 0.8rem;
   line-height: 1.4;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Field Completion Circular Component
+   ═══════════════════════════════════════════════════════════ */
+.eg-field-progress-card {
+  background: var(--eg-surface, #ffffff);
+  color: var(--eg-ink, #0f172a);
+  border: 1px solid var(--eg-line, #e2e8f0);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  box-sizing: border-box;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.eg-field-progress-card:hover {
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.07);
+}
+
+.eg-progress-circle-wrap {
+  position: relative;
+  width: 76px;
+  height: 76px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.eg-progress-circle-svg {
+  width: 76px;
+  height: 76px;
+  transform: rotate(-90deg);
+  display: block;
+}
+
+.eg-circle-bg {
+  fill: none;
+  stroke: var(--eg-civic-soft, #f1f5f9);
+  stroke-width: 6.5;
+}
+
+.eg-circle-bar {
+  fill: none;
+  stroke-width: 6.5;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.6s cubic-bezier(0.16, 1, 0.3, 1), stroke 0.3s ease;
+}
+
+.eg-circle-bar-success {
+  stroke: var(--eg-success, #10b981);
+}
+
+.eg-circle-bar-info {
+  stroke: #3b82f6;
+}
+
+.eg-circle-bar-warning {
+  stroke: var(--eg-warning, #f59e0b);
+}
+
+.eg-circle-bar-danger {
+  stroke: var(--eg-danger, #ef4444);
+}
+
+.eg-circle-inner-content {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  text-align: center;
+  user-select: none;
+}
+
+.eg-circle-fraction {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  line-height: 1;
+  font-feature-settings: "tnum";
+  font-variant-numeric: tabular-nums;
+}
+
+.eg-circle-num {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--eg-ink, #0f172a);
+  letter-spacing: -0.02em;
+}
+
+.eg-circle-slash {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--eg-muted, #94a3b8);
+  margin: 0 1.5px;
+}
+
+.eg-circle-total {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--eg-muted, #64748b);
+}
+
+.eg-circle-sublabel {
+  font-size: 0.54rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--eg-muted, #94a3b8);
+  margin-top: 3px;
+}
+
+.eg-progress-details {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.eg-progress-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.eg-progress-card-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--eg-muted, #64748b);
+}
+
+.eg-progress-percent-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  border-radius: 9999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.eg-badge-success {
+  background: rgba(40, 118, 91, 0.12);
+  color: var(--eg-success, #15803d);
+  border: 1px solid rgba(40, 118, 91, 0.25);
+}
+
+.eg-badge-info {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+}
+
+.eg-badge-warning {
+  background: rgba(152, 106, 22, 0.12);
+  color: var(--eg-warning, #b45309);
+  border: 1px solid rgba(152, 106, 22, 0.25);
+}
+
+.eg-badge-danger {
+  background: rgba(181, 59, 66, 0.1);
+  color: var(--eg-danger, #b91c1c);
+  border: 1px solid rgba(181, 59, 66, 0.25);
+}
+
+.eg-progress-main-count {
+  font-size: 0.92rem;
+  color: var(--eg-ink, #1e293b);
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.eg-progress-main-count strong {
+  font-weight: 800;
+}
+
+.eg-progress-remaining-text {
+  font-size: 0.75rem;
+  color: var(--eg-muted, #64748b);
+  line-height: 1.3;
+}
+
+.eg-progress-jump-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  align-self: flex-start;
+  margin-top: 6px;
+  padding: 5px 10px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #2563eb;
+  background: #eff6ff;
+  border: 1px solid #dbeafe;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+
+.eg-progress-jump-btn:hover {
+  background: #dbeafe;
+  border-color: #bfdbfe;
+  color: #1d4ed8;
+  transform: translateX(1px);
+}
+
+.eg-progress-all-done-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+  font-size: 0.73rem;
+  font-weight: 600;
+  color: var(--eg-success, #15803d);
 }
 
 /* Checklist */
@@ -1463,30 +1799,14 @@
   font-family: var(--eg-font) !important;
 }
 
-/* Floating badge */
-.eg-floating-badge,
-.eg-floating-badge.eg-idle,
-.eg-floating-badge.eg-ai-ready,
-.eg-floating-badge.eg-checking,
-.eg-floating-badge.eg-standby,
-.eg-floating-badge.eg-ai-analyzing {
-  background: var(--eg-surface) !important;
-  color: var(--eg-ink) !important;
-  border-color: var(--eg-line) !important;
-  border-radius: 10px !important;
-  box-shadow: 0 10px 26px -14px rgba(42, 35, 24, 0.45) !important;
-}
-
+/* Floating badge — always dark, never overridden by page theme */
+/* Only the accent border colour changes per state; the dark gradient is preserved */
 .eg-floating-badge.eg-ready {
-  background: var(--eg-surface) !important;
-  color: var(--eg-ink) !important;
-  border-color: var(--eg-success) !important;
+  border-left-color: var(--eg-success, #34d399) !important;
 }
 
 .eg-floating-badge.eg-not-ready {
-  background: var(--eg-surface) !important;
-  color: var(--eg-ink) !important;
-  border-color: var(--eg-danger) !important;
+  border-left-color: var(--eg-danger, #090909) !important;
 }
 
 .eg-badge-title {
@@ -1518,7 +1838,6 @@
   color: var(--eg-civic) !important;
 }
 
-.eg-badge-check-btn,
 .eg-btn-primary,
 .eg-btn-autofill,
 .eg-btn-replace-doc,
@@ -1631,12 +1950,13 @@
 .eg-issue-card,
 .eg-override-card,
 .eg-status-banner,
+.eg-field-progress-card,
 .eg-drawer-standby-box,
 .eg-drawer-loading-box {
   background: var(--eg-surface) !important;
   color: var(--eg-ink) !important;
   border: 1px solid var(--eg-line) !important;
-  border-radius: 7px !important;
+  border-radius: 10px !important;
 }
 
 .eg-banner-ready {
@@ -2027,6 +2347,7 @@
   animation: eg-tooltip-in 0.22s cubic-bezier(0.34, 1.56, 0.64, 1) both;
   overflow: hidden;
   max-width: 560px;
+  transition: background-color 0.25s ease, border-color 0.25s ease;
 }
 
 @keyframes eg-tooltip-in {
@@ -2176,45 +2497,108 @@
   background: rgba(0, 0, 0, 0.06);
 }
 
+.eg-help-tooltip.eg-help-loading .eg-help-dismiss:hover {
+  color: #f8fafc;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.eg-help-tooltip.eg-help-ready .eg-help-content {
+  animation: eg-help-fade-in 0.25s ease both;
+}
+
+@keyframes eg-help-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* ═══════════════════════════════════════════════════════════
    Form Translator — Translate Button, Dropdown & Banners
    ═══════════════════════════════════════════════════════════ */
 
 /* ── Translate button inside the floating badge ── */
+/* ── Translate button in side-tab ── */
 .eg-translate-btn {
-  background: var(--eg-civic-soft, #f6efe4);
-  border: 1px solid var(--eg-line, #e9e0d2);
-  color: var(--eg-civic, #8a6432);
-  font-size: 0.95rem;
-  line-height: 1;
-  width: 30px;
-  height: 30px;
-  border-radius: 7px;
-  display: inline-flex;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.75);
+  width: 100%;
+  padding: 7px 4px 6px;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
+  gap: 4px;
   cursor: pointer;
-  transition: background 0.18s ease, transform 0.15s ease, box-shadow 0.15s ease;
+  transition: background 0.18s ease, color 0.18s ease, transform 0.15s ease, box-shadow 0.15s ease;
   flex-shrink: 0;
   position: relative;
+  font-family: inherit;
 }
 
 .eg-translate-btn:hover {
-  background: var(--eg-civic, #8a6432);
+  background: rgba(255, 255, 255, 0.12);
   color: #ffffff;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(138, 100, 50, 0.35);
+  transform: scale(1.08);
+  border-color: rgba(255, 255, 255, 0.3);
 }
 
 .eg-translate-btn.eg-tr-btn-active {
-  background: var(--eg-civic, #8a6432);
-  color: #ffffff;
-  box-shadow: 0 0 0 3px rgba(138, 100, 50, 0.25);
+  background: rgba(138, 100, 50, 0.3);
+  color: #fcd99e;
+  border-color: rgba(138, 100, 50, 0.5);
+  box-shadow: 0 0 0 2px rgba(138, 100, 50, 0.2);
 }
 
 .eg-translate-btn.eg-tr-btn-loading {
   pointer-events: none;
-  opacity: 0.85;
+  opacity: 0.75;
+}
+
+/* Tooltip for translate btn */
+.eg-translate-btn::before {
+  content: attr(data-tooltip);
+  position: absolute;
+  right: calc(100% + 10px);
+  top: 50%;
+  transform: translateY(-50%) translateX(6px);
+  background: #1e293b;
+  color: #e2e8f0;
+  font-size: 0.72rem;
+  font-weight: 600;
+  white-space: nowrap;
+  padding: 5px 10px;
+  border-radius: 6px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+  z-index: 1;
+  letter-spacing: 0.01em;
+}
+
+.eg-translate-btn::after {
+  content: '';
+  position: absolute;
+  right: calc(100% + 4px);
+  top: 50%;
+  transform: translateY(-50%) translateX(6px);
+  border: 5px solid transparent;
+  border-left-color: #1e293b;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.eg-translate-btn:hover::before,
+.eg-translate-btn:hover::after {
+  opacity: 1;
+  transform: translateY(-50%) translateX(0);
 }
 
 .eg-tr-btn-spinner {
@@ -2229,7 +2613,7 @@
 
 .eg-translate-btn.eg-tr-btn-active .eg-tr-btn-spinner,
 .eg-translate-btn.eg-tr-btn-loading .eg-tr-btn-spinner {
-  border-color: rgba(255,255,255,0.3);
+  border-color: rgba(255, 255, 255, 0.3);
   border-top-color: #ffffff;
 }
 
@@ -2250,8 +2634,15 @@
 }
 
 @keyframes eg-tr-pop {
-  from { opacity: 0; transform: scale(0.93) translateY(6px); }
-  to   { opacity: 1; transform: scale(1)   translateY(0); }
+  from {
+    opacity: 0;
+    transform: scale(0.93) translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
 
 .eg-tr-dropdown-header {
@@ -2310,7 +2701,8 @@
 /* ── Translation notification banners (bottom-right) ── */
 .eg-translate-banner {
   position: fixed;
-  bottom: 88px;        /* just above the floating badge */
+  bottom: 88px;
+  /* just above the floating badge */
   right: 24px;
   max-width: 400px;
   width: calc(100vw - 48px);
@@ -2374,8 +2766,8 @@
 .eg-tr-restore-btn {
   font-size: 0.72rem;
   font-weight: 600;
-  background: rgba(255,255,255,0.45);
-  border: 1px solid rgba(255,255,255,0.5) !important;
+  background: rgba(255, 255, 255, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
   border-radius: 5px;
   padding: 3px 8px;
   cursor: pointer;
@@ -2386,7 +2778,7 @@
   background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
   border: 1.5px solid #6366f1;
   color: #e0e7ff;
-  box-shadow: 0 12px 30px -8px rgba(0,0,0,0.4), 0 0 20px rgba(99,102,241,0.25);
+  box-shadow: 0 12px 30px -8px rgba(0, 0, 0, 0.4), 0 0 20px rgba(99, 102, 241, 0.25);
 }
 
 .eg-translate-banner.eg-translate-loading .eg-tr-title {
@@ -2401,7 +2793,7 @@
 .eg-tr-spinner {
   width: 32px;
   height: 32px;
-  border: 3px solid rgba(255,255,255,0.2);
+  border: 3px solid rgba(255, 255, 255, 0.2);
   border-top-color: #818cf8;
   border-radius: 50%;
   animation: eg-spin 0.8s linear infinite;
@@ -2478,42 +2870,85 @@
 
 /* ── ℹ️ Button inside the badge ── */
 .eg-pageinfo-btn {
-  background: var(--eg-civic-soft, #f6efe4);
-  border: 1px solid var(--eg-line, #e9e0d2);
-  color: var(--eg-civic, #8a6432);
-  font-size: 0.95rem;
-  line-height: 1;
-  width: 30px;
-  height: 30px;
-  border-radius: 7px;
-  display: inline-flex;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.75);
+  width: 100%;
+  padding: 7px 4px 6px;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
+  gap: 4px;
   cursor: pointer;
-  transition: background 0.18s ease, transform 0.15s ease, box-shadow 0.15s ease;
+  transition: background 0.18s ease, color 0.18s ease, transform 0.15s ease, box-shadow 0.15s ease;
   flex-shrink: 0;
+  position: relative;
+  font-family: inherit;
 }
 
 .eg-pageinfo-btn:hover {
-  background: var(--eg-civic, #8a6432);
+  background: rgba(255, 255, 255, 0.12);
   color: #ffffff;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(138, 100, 50, 0.35);
+  transform: scale(1.08);
+  border-color: rgba(255, 255, 255, 0.3);
 }
 
 .eg-pageinfo-btn.eg-pi-btn-active {
-  background: var(--eg-civic, #8a6432);
-  color: #ffffff;
-  box-shadow: 0 0 0 3px rgba(138, 100, 50, 0.22);
+  background: rgba(99, 179, 237, 0.25);
+  color: #90cdf4;
+  border-color: rgba(99, 179, 237, 0.5);
+  box-shadow: 0 0 0 2px rgba(99, 179, 237, 0.2);
 }
 
-/* ── Floating panel (above badge) ── */
+/* Tooltip for pageinfo btn */
+.eg-pageinfo-btn::before {
+  content: attr(data-tooltip);
+  position: absolute;
+  right: calc(100% + 10px);
+  top: 50%;
+  transform: translateY(-50%) translateX(6px);
+  background: #1e293b;
+  color: #e2e8f0;
+  font-size: 0.72rem;
+  font-weight: 600;
+  white-space: nowrap;
+  padding: 5px 10px;
+  border-radius: 6px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+  z-index: 1;
+  letter-spacing: 0.01em;
+}
+
+.eg-pageinfo-btn::after {
+  content: '';
+  position: absolute;
+  right: calc(100% + 4px);
+  top: 50%;
+  transform: translateY(-50%) translateX(6px);
+  border: 5px solid transparent;
+  border-left-color: #1e293b;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.eg-pageinfo-btn:hover::before,
+.eg-pageinfo-btn:hover::after {
+  opacity: 1;
+  transform: translateY(-50%) translateX(0);
+}
+
+/* ── Floating panel (left of side-tab) ── */
 .eg-pageinfo-panel {
   position: fixed;
   z-index: 2147483646;
-  width: 360px;
-  max-width: calc(100vw - 48px);
-  max-height: 80vh;
+  width: 380px;
+  max-width: calc(100vw - 86px);
+  max-height: calc(100vh - 32px);
   background: var(--eg-surface, #ffffff);
   border: 1px solid var(--eg-line, #e9e0d2);
   border-radius: 14px;
@@ -2529,8 +2964,15 @@
 }
 
 @keyframes eg-pi-pop {
-  from { opacity: 0; transform: scale(0.93) translateY(8px); }
-  to   { opacity: 1; transform: scale(1)   translateY(0); }
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateX(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1) translateX(0);
+  }
 }
 
 /* ── Panel header ── */
@@ -2576,13 +3018,13 @@
 
 .eg-pi-url {
   font-size: 0.72rem;
-  color: rgba(255,255,255,0.7);
+  color: rgba(255, 255, 255, 0.7);
   font-weight: 500;
 }
 
 .eg-pi-close-btn {
-  background: rgba(255,255,255,0.18);
-  border: 1px solid rgba(255,255,255,0.3);
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.3);
   color: #ffffff;
   width: 26px;
   height: 26px;
@@ -2597,17 +3039,36 @@
 }
 
 .eg-pi-close-btn:hover {
-  background: rgba(255,255,255,0.35);
+  background: rgba(255, 255, 255, 0.35);
 }
 
 /* ── Panel body (scrollable) ── */
 .eg-pi-body {
   overflow-y: auto;
-  flex: 1;
+  flex: 1 1 auto;
+  min-height: 0;
   padding: 14px 16px;
   display: flex;
   flex-direction: column;
   gap: 12px;
+  overscroll-behavior: contain;
+}
+
+.eg-pi-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.eg-pi-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.eg-pi-body::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.18);
+  border-radius: 4px;
+}
+
+.eg-pi-body::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.32);
 }
 
 /* ── Legitimacy badge ── */
@@ -2725,7 +3186,7 @@
 }
 
 .eg-pi-warnings .eg-pi-list-item {
-  background: rgba(255,255,255,0.7);
+  background: rgba(255, 255, 255, 0.7);
   border-color: #fcd34d;
   color: #78350f;
 }
